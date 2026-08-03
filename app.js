@@ -2,13 +2,21 @@
 const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw";
 
-// Conexão corrigida (usando o objeto global 'supabase' da biblioteca)
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+let db = null;
 let veiculosLocais = [];
 
 // Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
+    // Código de segurança para garantir o carregamento do script externo
+    if (typeof supabase === 'undefined') {
+        alert("Erro crítico: A biblioteca do Supabase não foi carregada pela sua rede. Verifique sua conexão com a internet ou tente recarregar a página com Ctrl + F5.");
+        console.error("Biblioteca 'supabase' global não encontrada.");
+        return;
+    }
+
+    // Inicializa o cliente se tudo estiver correto
+    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
     buscarVeiculos();
     escutarAlteracoes();
     document.getElementById('data_agendamento').valueAsDate = new Date();
@@ -16,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Buscar dados iniciais do banco
 async function buscarVeiculos() {
+    if (!db) return;
     const { data, error } = await db.from('veiculos').select('*');
     if (error) {
         console.error("Erro ao buscar dados:", error);
@@ -27,6 +36,7 @@ async function buscarVeiculos() {
 
 // Atualização Automática em tempo real (Multi-dispositivos)
 function escutarAlteracoes() {
+    if (!db) return;
     db.channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, (payload) => {
         buscarVeiculos();
@@ -72,6 +82,7 @@ function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text", id); }
 async function drop(ev, novoStatus) {
     ev.preventDefault();
+    if (!db) return;
     const id = ev.dataTransfer.getData("text");
     
     // Atualização visual rápida na tela
@@ -86,6 +97,7 @@ async function drop(ev, novoStatus) {
 
 // Adicionar ou Editar Registro
 async function salvarVeiculo() {
+    if (!db) return;
     const id = document.getElementById('veiculo-id').value;
     const dados = {
         cliente: document.getElementById('cliente').value,
@@ -158,12 +170,12 @@ function notificarWhatsApp(id) {
     }
 
     const numeroLimpo = v.telefone.replace(/\D/g, '');
-    let mensagem = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
+    let message = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
     
     if (v.status === 'FINALIZADO') {
-        mensagem += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
+        message += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
     }
 
-    const urlWhatsapp = `https://whatsapp.com{numeroLimpo}&text=${encodeURIComponent(mensagem)}`;
+    const urlWhatsapp = `https://whatsapp.com{numeroLimpo}&text=${encodeURIComponent(message)}`;
     window.open(urlWhatsapp, '_blank');
 }
