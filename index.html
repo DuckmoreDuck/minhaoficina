@@ -86,8 +86,8 @@
     <script>
         // CONFIGURAÇÃO DO SEU BANCO DE DADOS
         // COLOQUE SUAS CHAVES DO SUPABASE ENTRE AS ASPAS ABAIXO:
-        const SUPABASE_URL = "SUA_PROJECT_URL_AQUI";
-        const SUPABASE_KEY = "SUA_ANON_PUBLIC_KEY_AQUI";
+        const SUPABASE_URL = "https://bwrbduzlcbfbsrrnowam.supabase.co/rest/v1/";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw";
 
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
