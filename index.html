@@ -11,10 +11,11 @@
         h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 15px; text-align: center; }
         .form-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
         .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-        input, textarea, button { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
+        input, textarea, button, select { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         textarea { resize: vertical; height: 45px; }
         button { background-color: #1e3a8a; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #1d4ed8; }
+        
         .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; align-items: start; }
         .column { background: #eaedf2; border-radius: 8px; padding: 15px; min-height: 600px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .column-header { text-align: center; font-weight: bold; margin-bottom: 15px; padding: 8px; border-radius: 4px; color: white; text-transform: uppercase; font-size: 13px; }
@@ -23,26 +24,39 @@
         .col-execucao { background-color: #f59e0b; }
         .col-finalizado { background-color: #10b981; }
         .col-retirado { background-color: #ef4444; }
+        
         .cards-container { min-height: 530px; border: 2px dashed transparent; border-radius: 6px; transition: all 0.2s; }
         .drag-over { background: #d1d5db !important; border-color: #9ca3af; }
+        
         .card { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 5px solid #1e3a8a; cursor: grab; user-select: none; }
         .card:active { cursor: grabbing; }
         .card h4 { font-size: 16px; margin-bottom: 4px; text-transform: uppercase; color: #111827; }
         .card p { font-size: 13px; color: #4b5563; margin-bottom: 4px; }
-        .card .obs-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 12px; margin-top: 5px; color: #374151; max-height: 60px; overflow-y: auto; white-space: pre-wrap; }
-        .card .mecanico-box { margin-top: 8px; font-size: 13px; display: flex; gap: 5px; align-items: center; }
-        .card .mecanico-box input { padding: 4px 8px; font-size: 12px; }
-        .card .mecanico-tag { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; border: 1px solid #fcd34d; }
+        .card .obs-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; font-size: 12px; margin-top: 5px; color: #374151; max-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+        .card .mecanico-box { margin-top: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 5px; }
+        .card .mecanico-box input { padding: 6px 8px; font-size: 12px; }
+        .card .mecanico-tag { background: #fef3c7; color: #92400e; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid #fcd34d; text-align: center; }
+        .card .status-select { padding: 4px; font-size: 12px; height: auto; margin-top: 5px; background-color: #f3f4f6; }
         .card .client-info { font-weight: bold; color: #1e3a8a; margin-top: 5px; border-top: 1px dashed #e5e7eb; padding-top: 5px; }
-        .card-actions { display: flex; justify-content: space-between; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
-        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; width: 100%; font-size: 13px; font-weight: bold; text-align: center; border: none; cursor: pointer; }
+        
+        .card-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
+        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; font-size: 13px; font-weight: bold; text-align: center; border: none; cursor: pointer; }
         .btn-whatsapp:hover { background-color: #20ba5a; }
-        .btn-del { background: #fee2e2; color: #dc2626; max-width: 40px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-edit-ficha { background: #e0f2fe; color: #0369a1; border: none; border-radius: 4px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .btn-edit-ficha:hover { background: #bae6fd; }
+        .btn-del { background: #fee2e2; color: #dc2626; padding: 8px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .btn-del:hover { background: #fca5a5; }
-    </style>
 
-    <!-- Script de integração oficial do Supabase via cdnjs (Sem riscos de Time Out) -->
-    <script src="https://cloudflare.com"></script>
+        /* ESTILO DO FORMULÁRIO DE EDIÇÃO FLUTUANTE (MODAL) */
+        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px; }
+        .modal-box h3 { color: #1e3a8a; font-size: 18px; margin-bottom: 5px; border-bottom: 2px solid #eaedf2; padding-bottom: 8px; }
+        .modal-box label { font-size: 12px; font-weight: bold; color: #4b5563; margin-bottom: -6px; }
+        .modal-box textarea { height: 80px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
+        .btn-cancel { background: #e5e7eb; color: #374151; }
+        .btn-cancel:hover { background: #d1d5db; }
+    </style>
 </head>
 <body>
 
@@ -83,96 +97,57 @@
         </div>
     </div>
 
-    <script>
-        // Links de Conexão com o seu Banco Supabase
-        const SUPABASE_URL = "https://bwrbduzlcbfbsrrnowam.supabase.co/rest/v1/";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw"; // <-- SUBSTITUA ESSE TEXTO PELA SUA CHAVE REAL
+    <!-- JANELA FLUTUANTE DE EDIÇÃO (MODAL) -->
+    <div id="modalEdicao" class="modal-bg">
+        <div class="modal-box">
+            <h3>✏️ Editar Ficha do Veículo</h3>
+            <input type="hidden" id="edit-id">
+            
+            <label>Modelo do Veículo</label>
+            <input type="text" id="edit-veiculo">
+            
+            <label>Placa</label>
+            <input type="text" id="edit-placa">
+            
+            <label>Nome do Cliente</label>
+            <input type="text" id="edit-cliente">
+            
+            <label>WhatsApp (Apenas números)</label>
+            <input type="tel" id="edit-whatsapp">
+            
+            <label>Observações do Serviço</label>
+            <textarea id="edit-observacoes"></textarea>
+            
+            <div class="modal-actions">
+                <button onclick="fecharModal()" class="btn-cancel" style="width: 100px;">Cancelar</button>
+                <button onclick="salvarEdicaoFicha()" style="width: 120px;">Salvar</button>
+            </div>
+        </div>
+    </div>
 
-        // Inicializador oficial seguro da conexão
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    <script>
+        const SUPABASE_URL = "https://supabase.co";
+        const SUPABASE_KEY = "COLE_A_SUA_CHAVE_PUBLICA_AQUI"; // <-- APAGUE ESSE TEXTO E COLE SUA CHAVE DO SUPABASE AQUI
 
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
+        const headers = { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
+        
+        let localVeiculosCache = []; 
+        let isModalOpen = false; 
 
         async function carregarDados() {
             try {
-                const { data, error } = await supabase.from('veiculos').select('*').order('created_at', { ascending: true });
-                if (error) {
-                    console.error("Erro ao ler tabela:", error);
-                    return [];
-                }
-                return data || [];
+                const response = await fetch(`${SUPABASE_URL}?select=*&order=created_at.asc`, { method: "GET", headers: headers });
+                if (!response.ok) throw new Error("Erro na API");
+                const dados = await response.json();
+                localVeiculosCache = dados; 
+                return dados;
             } catch (err) {
-                console.error("Erro de conexão com o banco:", err);
-                return [];
+                console.error("Erro ao ler dados da nuvem:", err);
+                return localVeiculosCache;
             }
         }
 
         async function adicionarVeiculo() {
             const txtVeiculo = document.getElementById('veiculo');
             const txtPlaca = document.getElementById('placa');
-            const txtCliente = document.getElementById('cliente');
-            const txtWhatsapp = document.getElementById('whatsapp');
-            const txtObs = document.getElementById('observacoes');
-
-            if (!txtVeiculo.value || !txtPlaca.value || !txtCliente.value || !txtWhatsapp.value) {
-                alert('Por favor, preencha pelo menos Veículo, Placa, Cliente e Zap.');
-                return;
-            }
-
-            const limpaWhats = txtWhatsapp.value.replace(/\D/g, '');
-
-            const novo = {
-                modelo: txtVeiculo.value,
-                placa: txtPlaca.value,
-                cliente: txtCliente.value,
-                whatsapp: limpaWhats,
-                observacoes: txtObs.value || "Nenhuma observação informada.",
-                mecanico: "",
-                status: 0
-            };
-
-            const { error } = await supabase.from('veiculos').insert([novo]);
-            
-            if (error) {
-                alert("Erro ao salvar dados na nuvem.");
-                console.error(error);
-            } else {
-                txtVeiculo.value = ''; txtPlaca.value = ''; txtCliente.value = ''; txtWhatsapp.value = ''; txtObs.value = '';
-                renderizarPainel();
-            }
-        }
-
-        async function atualizarMecanico(id, valor) {
-            const { error } = await supabase.from('veiculos').update({ mecanico: valor }).eq('id', id);
-            if (error) console.error("Erro ao atualizar mecânico:", error);
-        }
-
-        async function deletarVeiculo(id) {
-            if (confirm('Deseja remover este veículo?')) {
-                const { error } = await supabase.from('veiculos').delete().eq('id', id);
-                if (error) alert("Erro ao deletar dados.");
-                renderizarPainel();
-            }
-        }
-
-        function allowDrop(event) {
-            event.preventDefault();
-        }
-
-        function drag(event, id) {
-            event.dataTransfer.setData("text/plain", id);
-        }
-
-        function dragEnter(event) {
-            event.currentTarget.classList.add('drag-over');
-        }
-
-        function dragLeave(event) {
-            event.currentTarget.classList.remove('drag-over');
-        }
-
-        async function drop(event, novoStatus) {
-            event.preventDefault();
-            const container = event.currentTarget;
-            container.classList.remove('drag-over');
