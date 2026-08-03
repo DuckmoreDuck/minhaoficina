@@ -141,7 +141,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Disparar notificação para o WhatsApp do cliente
+// Disparar notificação para o WhatsApp do cliente (CORRIGIDO)
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
@@ -150,12 +150,18 @@ function notificarWhatsApp(id) {
     }
 
     const numeroLimpo = v.telefone.replace(/\D/g, '');
-    let message = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
+    
+    // CORREÇÃO: Padronizado para usar apenas a variável 'textoMensagem'
+    let textoMensagem = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
     
     if (v.status === 'FINALIZADO') {
-        message += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
+        textoMensagem += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
     }
 
-    const urlWhatsapp = `https://whatsapp.com{numeroLimpo}&text=${encodeURIComponent(message)}`;
+    // Criando a URL limpa e válida usando a API padrão do WhatsApp
+    const urlWhatsapp = "https://whatsapp.com" + numeroLimpo + "&text=" + encodeURIComponent(textoMensagem);
+    
+    // Abre a aba do WhatsApp
     window.open(urlWhatsapp, '_blank');
 }
+
