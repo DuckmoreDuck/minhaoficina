@@ -80,7 +80,7 @@
         </div>
     </div>
 
-       <script>
+    <script>
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
         let veiculos = JSON.parse(localStorage.getItem('oficina_veiculos')) || [];
 
@@ -134,7 +134,6 @@
             }
         }
 
-        // --- FUNÇÕES DE DRAG AND DROP CORRIGIDAS E ADICIONADAS ---
         function drag(event, id) {
             event.dataTransfer.setData("text/plain", id);
         }
@@ -165,45 +164,18 @@
             }
         }
 
-        // --- FUNÇÃO DE RENDERIZAÇÃO DO PAINEL COORDENADA ---
         function renderizarPainel() {
-            // Limpa todas as colunas
             for (let i = 0; i <= 4; i++) {
-                document.getElementById(`status-${i}`).innerHTML = '';
+                const container = document.getElementById(`status-${i}`);
+                if (container) container.innerHTML = '';
             }
 
             veiculos.forEach(carro => {
                 const container = document.getElementById(`status-${carro.status}`);
                 if (!container) return;
 
-                // Mensagem customizada para o WhatsApp baseada no status atual
                 const msgZap = encodeURIComponent(`Olá ${carro.cliente}, o seu veículo ${carro.modelo} (Placa: ${carro.placa}) está com o status atualizado para: *${statusNomes[carro.status]}*.`);
                 const linkWhats = `https://whatsapp.com{carro.whatsapp}&text=${msgZap}`;
 
                 const cardHtml = `
                     <div class="card" draggable="true" ondragstart="drag(event, ${carro.id})">
-                        <h4>${carro.modelo}</h4>
-                        <p><strong>Placa:</strong> ${carro.placa}</p>
-                        <p class="client-info">👤 ${carro.cliente}</p>
-                        <div class="obs-box">${carro.observacoes}</div>
-                        
-                        <div class="mecanico-box">
-                            ${carro.mecanico ? `<span class="mecanico-tag">🛠️ ${carro.mecanico}</span>` : ''}
-                            <input type="text" placeholder="Mecânico..." value="${carro.mecanico}" 
-                                   onchange="atualizarMecanico(${carro.id}, this.value); renderizarPainel();">
-                        </div>
-
-                        <div class="card-actions">
-                            <a href="${linkWhats}" target="_blank" class="btn-whatsapp">💬 Enviar Zap</a>
-                            <button class="btn-del" onclick="deletarVeiculo(${carro.id})">🗑️</button>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-        }
-
-        // Inicializa a tela ao carregar a página
-        window.onload = renderizarPainel;
-    </script>
-
