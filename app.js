@@ -55,16 +55,24 @@ function renderizarPainel() {
     });
 }
 
-// Funções para Arrastar e Soltar (Drag and Drop)
-function allowDrop(ev) { ev.preventDefault(); }
-function drag(ev, id) { ev.dataTransfer.setData("text", id); }
+// Funções para Arrastar e Soltar (CORRIGIDAS)
+function allowDrop(ev) { 
+    ev.preventDefault(); 
+}
+
+function drag(ev, id) { 
+    ev.dataTransfer.setData("text/plain", id); 
+}
+
 function drop(ev, novoStatus) {
     ev.preventDefault();
-    const id = ev.dataTransfer.setData("text");
+    const id = ev.dataTransfer.getData("text/plain");
     
-    // Atualização visual rápida na tela
+    if (!id) return;
+
+    // Atualização do status na lista
     const veiculo = veiculosLocais.find(v => v.id === id);
-    if(veiculo) {
+    if (veiculo) {
         veiculo.status = novoStatus;
         salvarNoLocalStorage();
         renderizarPainel();
@@ -141,7 +149,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Disparar notificação para o WhatsApp do cliente (CORRIGIDO)
+// Disparar notificação para o WhatsApp do cliente (CORRIGIDO E SEGURO)
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
@@ -150,18 +158,12 @@ function notificarWhatsApp(id) {
     }
 
     const numeroLimpo = v.telefone.replace(/\D/g, '');
-    
-    // CORREÇÃO: Padronizado para usar apenas a variável 'textoMensagem'
     let textoMensagem = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
     
     if (v.status === 'FINALIZADO') {
         textoMensagem += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
     }
 
-    // Criando a URL limpa e válida usando a API padrão do WhatsApp
     const urlWhatsapp = "https://whatsapp.com" + numeroLimpo + "&text=" + encodeURIComponent(textoMensagem);
-    
-    // Abre a aba do WhatsApp
     window.open(urlWhatsapp, '_blank');
 }
-
