@@ -160,7 +160,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Função do WhatsApp com URL padrão Web (Evita erros de redirecionamento de abas)
+// Função do WhatsApp corrigida
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
@@ -168,11 +168,35 @@ function notificarWhatsApp(id) {
         return;
     }
 
-    const num = v.telefone.replace(/\D/g, '');
-    const txt = encodeURIComponent(`Olá ${v.cliente}! O veículo de placa *${v.placa}* mudou de status para: *${v.status}*.`);
+    // 1. Limpa o telefone mantendo só os números
+    let num = v.telefone.replace(/\D/g, '');
+
+    // 2. Se o usuário digitou sem o DDD/DDI (ex: 11999999999), adiciona o DDI do Brasil (55)
+    if (num.length >= 10 && !num.startsWith('55')) {
+        num = '55' + num;
+    }
+
+    // 3. Monta a mensagem personalizada por status
+    let mensagemCustomizada = `Olá ${v.cliente}! Seu veículo (Placa *${v.placa}*) está no status: *${v.status}*.`;
     
-    // URL direta do WhatsApp Web que funciona universalmente
-    const urlCompleta = `https://web.whatsapp.com{num}&text=${txt}`;
+    // Opcional: Mensagens personalizadas para cada status
+    switch (v.status) {
+        case 'EXECUÇÃO':
+            mensagemCustomizada = `Olá ${v.cliente}! Seu veículo (*${v.placa}*) já está em manutenção/execução.`;
+            break;
+        case 'FINALIZADO':
+            mensagemCustomizada = `Olá ${v.cliente}! O serviço no seu veículo (*${v.placa}*) foi finalizado! Já pode vir retirar.`;
+            break;
+        case 'RETIRADO':
+            mensagemCustomizada = `Olá ${v.cliente}! Obrigado por escolher nossos serviços. Seu veículo (*${v.placa}*) foi entregue!`;
+            break;
+    }
+
+    const txt = encodeURIComponent(mensagemCustomizada);
     
+    // 4. URL oficial do WhatsApp (Redireciona para o Web no PC ou pro App no celular)
+    const urlCompleta = `https://api.whatsapp.com/send?phone=${num}&text=${txt}`;
+    
+    // Abre em uma nova aba
     window.open(urlCompleta, '_blank');
 }
