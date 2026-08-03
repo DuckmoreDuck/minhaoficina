@@ -41,8 +41,8 @@
         .btn-del:hover { background: #fca5a5; }
     </style>
 
-    <!-- BIBLIOTECA DO SUPABASE IMPORTADA AQUI -->
-    <script src="https://jsdelivr.net"></script>
+    <!-- Script de integração oficial do Supabase via cdnjs (Sem riscos de Time Out) -->
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
@@ -84,28 +84,26 @@
     </div>
 
     <script>
-           <script>
-        // CONFIGURAÇÃO DO SEU BANCO DE DADOS (JÁ CONFIGURADO COM SUAS CHAVES)
+        // Links de Conexão com o seu Banco Supabase
         const SUPABASE_URL = "https://bwrbduzlcbfbsrrnowam.supabase.co/rest/v1/";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw"; // O Supabase usará a chave que você copiou
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw"; // <-- SUBSTITUA ESSE TEXTO PELA SUA CHAVE REAL
 
-        // CORREÇÃO AQUI: Inicialização correta usando a biblioteca global do Supabase
+        // Inicializador oficial seguro da conexão
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
 
-        // Carrega os dados diretamente do banco na nuvem
         async function carregarDados() {
             try {
                 const { data, error } = await supabase.from('veiculos').select('*').order('created_at', { ascending: true });
                 if (error) {
-                    console.error("Erro ao buscar dados:", error);
+                    console.error("Erro ao ler tabela:", error);
                     return [];
                 }
                 return data || [];
             } catch (err) {
-                console.error("Erro de conexão:", err);
+                console.error("Erro de conexão com o banco:", err);
                 return [];
             }
         }
@@ -135,8 +133,9 @@
             };
 
             const { error } = await supabase.from('veiculos').insert([novo]);
+            
             if (error) {
-                alert("Erro ao salvar no banco de dados.");
+                alert("Erro ao salvar dados na nuvem.");
                 console.error(error);
             } else {
                 txtVeiculo.value = ''; txtPlaca.value = ''; txtCliente.value = ''; txtWhatsapp.value = ''; txtObs.value = '';
@@ -152,17 +151,17 @@
         async function deletarVeiculo(id) {
             if (confirm('Deseja remover este veículo?')) {
                 const { error } = await supabase.from('veiculos').delete().eq('id', id);
-                if (error) alert("Erro ao deletar do banco de dados.");
+                if (error) alert("Erro ao deletar dados.");
                 renderizarPainel();
             }
         }
 
-        function drag(event, id) {
-            event.dataTransfer.setData("text/plain", id);
-        }
-
         function allowDrop(event) {
             event.preventDefault();
+        }
+
+        function drag(event, id) {
+            event.dataTransfer.setData("text/plain", id);
         }
 
         function dragEnter(event) {
@@ -177,55 +176,3 @@
             event.preventDefault();
             const container = event.currentTarget;
             container.classList.remove('drag-over');
-            
-            const id = parseInt(event.dataTransfer.getData("text/plain"));
-            
-            const { error } = await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id);
-            if (error) {
-                alert("Erro ao atualizar status na nuvem.");
-            } else {
-                renderizarPainel();
-            }
-        }
-
-        async function renderizarPainel() {
-            for (let i = 0; i <= 4; i++) {
-                const container = document.getElementById(`status-${i}`);
-                if (container) container.innerHTML = '';
-            }
-
-            const veiculos = await carregarDados();
-
-            veiculos.forEach(carro => {
-                const container = document.getElementById(`status-${carro.status}`);
-                if (!container) return;
-
-                const msgZap = encodeURIComponent(`Olá ${carro.cliente}, o seu veículo ${carro.modelo} (Placa: ${carro.placa}) está com o status atualizado para: *${statusNomes[carro.status]}*.`);
-                const linkWhats = `https://wa.me{carro.whatsapp}?text=${msgZap}`;
-
-                const cardHtml = `
-                    <div class="card" draggable="true" ondragstart="drag(event, ${carro.id})">
-                        <h4>${carro.modelo}</h4>
-                        <p><strong>Placa:</strong> ${carro.placa}</p>
-                        <p class="client-info">👤 ${carro.cliente}</p>
-                        <div class="obs-box">${carro.observacoes || ''}</div>
-                        
-                        <div class="mecanico-box">
-                            ${carro.mecanico ? `<span class="mecanico-tag">🛠️ ${carro.mecanico}</span>` : ''}
-                            <input type="text" placeholder="Mecânico..." value="${carro.mecanico || ''}" 
-                                   onchange="atualizarMecanico(${carro.id}, this.value); renderizarPainel();">
-                        </div>
-
-                        <div class="card-actions">
-                            <a href="${linkWhats}" target="_blank" class="btn-whatsapp">💬 Enviar Zap</a>
-                            <button class="btn-del" onclick="deletarVeiculo(${carro.id})">🗑️</button>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-        }
-
-        window.onload = renderizarPainel;
-    </script>
-
