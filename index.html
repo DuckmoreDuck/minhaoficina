@@ -10,12 +10,11 @@
         header { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 15px; text-align: center; }
         .form-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
-        .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 10px; }
-        input, textarea, button, select { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+        input, textarea, button { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         textarea { resize: vertical; height: 45px; }
         button { background-color: #1e3a8a; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #1d4ed8; }
-        
         .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; align-items: start; }
         .column { background: #eaedf2; border-radius: 8px; padding: 15px; min-height: 600px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .column-header { text-align: center; font-weight: bold; margin-bottom: 15px; padding: 8px; border-radius: 4px; color: white; text-transform: uppercase; font-size: 13px; }
@@ -24,37 +23,22 @@
         .col-execucao { background-color: #f59e0b; }
         .col-finalizado { background-color: #10b981; }
         .col-retirado { background-color: #ef4444; }
-        
         .cards-container { min-height: 530px; border: 2px dashed transparent; border-radius: 6px; transition: all 0.2s; }
         .drag-over { background: #d1d5db !important; border-color: #9ca3af; }
-        
         .card { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 5px solid #1e3a8a; cursor: grab; user-select: none; }
         .card:active { cursor: grabbing; }
         .card h4 { font-size: 16px; margin-bottom: 4px; text-transform: uppercase; color: #111827; }
         .card p { font-size: 13px; color: #4b5563; margin-bottom: 4px; }
-        .card .obs-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; font-size: 12px; margin-top: 5px; color: #374151; max-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
-        .card .mecanico-box { margin-top: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 5px; }
-        .card .mecanico-box input { padding: 6px 8px; font-size: 12px; }
-        .card .mecanico-tag { background: #fef3c7; color: #92400e; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid #fcd34d; text-align: center; }
-        .card .status-select { padding: 4px; font-size: 12px; height: auto; margin-top: 5px; background-color: #f3f4f6; }
+        .card .obs-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 12px; margin-top: 5px; color: #374151; max-height: 60px; overflow-y: auto; white-space: pre-wrap; }
+        .card .mecanico-box { margin-top: 8px; font-size: 13px; display: flex; gap: 5px; align-items: center; }
+        .card .mecanico-box input { padding: 4px 8px; font-size: 12px; }
+        .card .mecanico-tag { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; border: 1px solid #fcd34d; }
         .card .client-info { font-weight: bold; color: #1e3a8a; margin-top: 5px; border-top: 1px dashed #e5e7eb; padding-top: 5px; }
-        
-        .card-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
-        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; font-size: 13px; font-weight: bold; text-align: center; border: none; cursor: pointer; }
+        .card-actions { display: flex; justify-content: space-between; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
+        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; width: 100%; font-size: 13px; font-weight: bold; text-align: center; border: none; cursor: pointer; }
         .btn-whatsapp:hover { background-color: #20ba5a; }
-        .btn-edit-ficha { background: #e0f2fe; color: #0369a1; border: none; border-radius: 4px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .btn-edit-ficha:hover { background: #bae6fd; }
-        .btn-del { background: #fee2e2; color: #dc2626; padding: 8px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .btn-del { background: #fee2e2; color: #dc2626; max-width: 40px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-del:hover { background: #fca5a5; }
-
-        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px; }
-        .modal-box h3 { color: #1e3a8a; font-size: 18px; margin-bottom: 5px; border-bottom: 2px solid #eaedf2; padding-bottom: 8px; }
-        .modal-box label { font-size: 12px; font-weight: bold; color: #4b5563; margin-bottom: -6px; }
-        .modal-box textarea { height: 80px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
-        .btn-cancel { background: #e5e7eb; color: #374151; }
-        .btn-cancel:hover { background: #d1d5db; }
     </style>
 </head>
 <body>
@@ -66,8 +50,7 @@
             <input type="text" id="placa" placeholder="Placa (ex: ABC1234)">
             <input type="text" id="cliente" placeholder="Nome do Cliente">
             <input type="tel" id="whatsapp" placeholder="Zap (ex: 11999998888)">
-        </div> <!-- FECHAMENTO CORRIGIDO AQUI -->
-    
+        </div>
         <div class="form-row-2">
             <textarea id="observacoes" placeholder="Observações (O que será feito no veículo?)"></textarea>
             <button onclick="adicionarVeiculo()" style="width: 150px;">+ Cadastrar</button>
@@ -97,63 +80,89 @@
         </div>
     </div>
 
-    <!-- JANELA FLUTUANTE DE EDIÇÃO (MODAL) CORRIGIDO E FECHADO -->
-    <div id="modalEdicao" class="modal-bg">
-        <div class="modal-box">
-            <h3>✏️ Editar Ficha do Veículo</h3>
-            <input type="hidden" id="edit-id">
-            
-            <label>Modelo do Veículo</label>
-            <input type="text" id="edit-veiculo">
-            
-            <label>Placa</label>
-            <input type="text" id="edit-placa">
-            
-            <label>Nome do Cliente</label>
-            <input type="text" id="edit-cliente">
-            
-            <label>WhatsApp (Apenas números)</label>
-            <input type="tel" id="edit-whatsapp">
-            
-            <label>Observações</label>
-            <textarea id="edit-observacoes"></textarea>
-
-            <label>Mecânico Responsável</label>
-            <input type="text" id="edit-mecanico" placeholder="Nome do mecânico">
-
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-                <button onclick="salvarEdicao()">Salvar Alterações</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- LÓGICA EM JAVASCRIPT ADICIONADA -->
     <script>
+        const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
         let veiculos = JSON.parse(localStorage.getItem('oficina_veiculos')) || [];
 
-        function salvarNoLocalStorage() {
+        function salvarDados() {
             localStorage.setItem('oficina_veiculos', JSON.stringify(veiculos));
+            renderizarPainel();
         }
 
         function adicionarVeiculo() {
-            const veiculoInput = document.getElementById('veiculo');
-            const placaInput = document.getElementById('placa');
-            const clienteInput = document.getElementById('cliente');
-            const whatsappInput = document.getElementById('whatsapp');
-            const obsInput = document.getElementById('observacoes');
+            const txtVeiculo = document.getElementById('veiculo');
+            const txtPlaca = document.getElementById('placa');
+            const txtCliente = document.getElementById('cliente');
+            const txtWhatsapp = document.getElementById('whatsapp');
+            const txtObs = document.getElementById('observacoes');
 
-            if (!veiculoInput.value || !clienteInput.value) {
-                alert('Por favor, preencha pelo menos o Veículo e o Nome do Cliente.');
+            if (!txtVeiculo.value || !txtPlaca.value || !txtCliente.value || !txtWhatsapp.value) {
+                alert('Por favor, preencha pelo menos Veículo, Placa, Cliente e Zap.');
                 return;
             }
 
-            const novoVeiculo = {
+            const limpaWhats = txtWhatsapp.value.replace(/\D/g, '');
+
+            const novo = {
                 id: Date.now(),
-                veiculo: veiculoInput.value,
-                placa: placaInput.value,
-                cliente: clienteInput.value,
-                whatsapp: whatsappInput.value.replace(/\D/g, ''), // Mantém apenas números
-                observacoes: obsInput.value,
-                mecanico: '',
-                status: 0 // Inicia em "Agendado"
+                modelo: txtVeiculo.value,
+                placa: txtPlaca.value,
+                cliente: txtCliente.value,
+                whatsapp: limpaWhats,
+                observacoes: txtObs.value || "Nenhuma observação informada.",
+                mecanico: "",
+                status: 0
+            };
+
+            veiculos.push(novo);
+            txtVeiculo.value = ''; txtPlaca.value = ''; txtCliente.value = ''; txtWhatsapp.value = ''; txtObs.value = '';
+            salvarDados();
+        }
+
+        function atualizarMecanico(id, valor) {
+            const carro = veiculos.find(v => v.id === id);
+            if (carro) {
+                carro.mecanico = valor;
+                localStorage.setItem('oficina_veiculos', JSON.stringify(veiculos));
+            }
+        }
+
+        // CORREÇÃO: Função que estava cortada no seu código original
+        function deletarVeiculo(id) {
+            if (confirm('Deseja remover este veículo?')) {
+                veiculos = veiculos.filter(v => v.id !== id);
+                salvarDados();
+            }
+        }
+
+        // ADICIONADO: Renderiza os cards nas colunas corretas baseado no status
+        function renderizarPainel() {
+            for (let i = 0; i <= 4; i++) {
+                document.getElementById(`status-${i}`).innerHTML = '';
+            }
+
+            veiculos.forEach(v => {
+                const container = document.getElementById(`status-${v.status}`);
+                if (!container) return;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.draggable = true;
+                card.ondragstart = (e) => drag(e, v.id);
+
+                const textoMensagem = encodeURIComponent(`Olá ${v.cliente}! Atualizamos o status do seu veículo ${v.modelo} (Placa: ${v.placa}) para: ${statusNomes[v.status]}.`);
+                const urlWhats = `https://whatsapp.com{v.whatsapp}&text=${textoMensagem}`;
+
+                card.innerHTML = `
+                    <h4>${v.modelo}</h4>
+                    <p><strong>Placa:</strong> ${v.placa}</p>
+                    <div class="client-info">👤 ${v.cliente}</div>
+                    <div class="obs-box">${v.observacoes}</div>
+                    
+                    <div class="mecanico-box">
+                        <input type="text" placeholder="Mecânico..." value="${v.mecanico}" onchange="atualizarMecanico(${v.id}, this.value)">
+                    </div>
+
+                    <div class="card-actions">
+                        <a href="${urlWhats}" target="_blank" class="btn-whatsapp">💬 Enviar Zap</a>
+                        <button class="btn-del" onclick="deletarVeiculo(${v.id})">🗑️</button>
