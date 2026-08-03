@@ -40,6 +40,9 @@
         .btn-del { background: #fee2e2; color: #dc2626; max-width: 40px; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-del:hover { background: #fca5a5; }
     </style>
+
+    <!-- BIBLIOTECA DO SUPABASE IMPORTADA AQUI -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
@@ -79,19 +82,27 @@
             <div class="cards-container" id="status-4" ondragover="allowDrop(event)" ondrop="drop(event, 4)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)"></div>
         </div>
     </div>
-    </div>
 
-    <!-- VOCÊ PRECISA DESTA TAG AQUI PARA ABRIR O JAVASCRIPT -->
     <script>
-        const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
-        let veiculos = JSON.parse(localStorage.getItem('oficina_veiculos')) || [];
+        // CONFIGURAÇÃO DO SEU BANCO DE DADOS
+        // COLOQUE SUAS CHAVES DO SUPABASE ENTRE AS ASPAS ABAIXO:
+        const SUPABASE_URL = "SUA_PROJECT_URL_AQUI";
+        const SUPABASE_KEY = "SUA_ANON_PUBLIC_KEY_AQUI";
 
-        function salvarDados() {
-            localStorage.setItem('oficina_veiculos', JSON.stringify(veiculos));
-            renderizarPainel();
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
+
+        // Carrega os dados diretamente do banco na nuvem
+        async function carregarDados() {
+            const { data, error } = await supabase.from('veiculos').select('*').order('created_at', { ascending: true });
+            if (error) {
+                console.error("Erro ao buscar dados:", error);
+                return [];
+            }
+            return data || [];
         }
 
-        function adicionarVeiculo() {
+        async function adicionarVeiculo() {
             const txtVeiculo = document.getElementById('veiculo');
             const txtPlaca = document.getElementById('placa');
             const txtCliente = document.getElementById('cliente');
@@ -106,7 +117,6 @@
             const limpaWhats = txtWhatsapp.value.replace(/\D/g, '');
 
             const novo = {
-                id: Date.now(),
                 modelo: txtVeiculo.value,
                 placa: txtPlaca.value,
                 cliente: txtCliente.value,
@@ -116,23 +126,26 @@
                 status: 0
             };
 
-            veiculos.push(novo);
-            txtVeiculo.value = ''; txtPlaca.value = ''; txtCliente.value = ''; txtWhatsapp.value = ''; txtObs.value = '';
-            salvarDados();
-        }
-
-        function atualizarMecanico(id, valor) {
-            const carro = veiculos.find(v => v.id === id);
-            if (carro) {
-                carro.mecanico = valor;
-                localStorage.setItem('oficina_veiculos', JSON.stringify(veiculos));
+            const { error } = await supabase.from('veiculos').insert([novo]);
+            if (error) {
+                alert("Erro ao salvar no banco de dados.");
+                console.error(error);
+            } else {
+                txtVeiculo.value = ''; txtPlaca.value = ''; txtCliente.value = ''; txtWhatsapp.value = ''; txtObs.value = '';
+                renderizarPainel();
             }
         }
 
-        function deletarVeiculo(id) {
+        async function atualizarMecanico(id, valor) {
+            const { error } = await supabase.from('veiculos').update({ mecanico: valor }).eq('id', id);
+            if (error) console.error("Erro ao atualizar mecânico:", error);
+        }
+
+        async function deletarVeiculo(id) {
             if (confirm('Deseja remover este veículo?')) {
-                veiculos = veiculos.filter(v => v.id !== id);
-                salvarDados();
+                const { error } = await supabase.from('veiculos').delete().eq('id', id);
+                if (error) alert("Erro ao deletar do banco de dados.");
+                renderizarPainel();
             }
         }
 
@@ -152,58 +165,12 @@
             event.currentTarget.classList.remove('drag-over');
         }
 
-        function drop(event, novoStatus) {
+        async function drop(event, novoStatus) {
             event.preventDefault();
             const container = event.currentTarget;
             container.classList.remove('drag-over');
             
             const id = parseInt(event.dataTransfer.getData("text/plain"));
-            const carro = veiculos.find(v => v.id === id);
             
-            if (carro) {
-                carro.status = novoStatus;
-                salvarDados();
-            }
-        }
-
-        function renderizarPainel() {
-            for (let i = 0; i <= 4; i++) {
-                const container = document.getElementById(`status-${i}`);
-                if (container) container.innerHTML = '';
-            }
-
-            veiculos.forEach(carro => {
-                const container = document.getElementById(`status-${carro.status}`);
-                if (!container) return;
-
-                const msgZap = encodeURIComponent(`Olá ${carro.cliente}, o seu veículo ${carro.modelo} (Placa: ${carro.placa}) está com o status atualizado para: *${statusNomes[carro.status]}*.`);
-                const linkWhats = `https://whatsapp.com{carro.whatsapp}&text=${msgZap}`;
-
-                const cardHtml = `
-                    <div class="card" draggable="true" ondragstart="drag(event, ${carro.id})">
-                        <h4>${carro.modelo}</h4>
-                        <p><strong>Placa:</strong> ${carro.placa}</p>
-                        <p class="client-info">👤 ${carro.cliente}</p>
-                        <div class="obs-box">${carro.observacoes}</div>
-                        
-                        <div class="mecanico-box">
-                            ${carro.mecanico ? `<span class="mecanico-tag">🛠️ ${carro.mecanico}</span>` : ''}
-                            <input type="text" placeholder="Mecânico..." value="${carro.mecanico}" 
-                                   onchange="atualizarMecanico(${carro.id}, this.value); renderizarPainel();">
-                        </div>
-
-                        <div class="card-actions">
-                            <a href="${linkWhats}" target="_blank" class="btn-whatsapp">💬 Enviar Zap</a>
-                            <button class="btn-del" onclick="deletarVeiculo(${carro.id})">🗑️</button>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-        }
-
-        window.onload = renderizarPainel;
-    </script> <!-- VOCÊ PRECISA DESTA TAG AQUI PARA FECHAR O JAVASCRIPT -->
-
-</body>
-</html>
+            const { error } = await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id);
+            if (error) {
