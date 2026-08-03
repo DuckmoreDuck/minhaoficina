@@ -45,9 +45,10 @@ function renderizarPainel() {
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'Não atribuído'}</p>
                 <p><strong>Data:</strong> ${v.data_agendamento}</p>
                 <p><em>${v.observacoes || ''}</em></p>
-                <div class="actions">
-                    <button class="btn-edit" onclick="carregarParaEdicao('${v.id}')">Editar</button>
-                    <button class="btn-whatsapp" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
+                <div class="actions" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="btn-edit" style="background: #3498db; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="carregarParaEdicao('${v.id}')">Editar</button>
+                    <button class="btn-whatsapp" style="background: #25D366; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
+                    <button class="btn-delete" style="background: #e74c3c; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
                 </div>
             `;
             container.appendChild(card);
@@ -55,7 +56,7 @@ function renderizarPainel() {
     });
 }
 
-// Funções para Arrastar e Soltar (CORRIGIDAS)
+// Funções para Arrastar e Soltar
 function allowDrop(ev) { 
     ev.preventDefault(); 
 }
@@ -70,7 +71,6 @@ function drop(ev, novoStatus) {
     
     if (!id) return;
 
-    // Atualização do status na lista
     const veiculo = veiculosLocais.find(v => v.id === id);
     if (veiculo) {
         veiculo.status = novoStatus;
@@ -98,14 +98,12 @@ function salvarVeiculo() {
     }
 
     if (id) {
-        // Atualizar veículo existente
         const index = veiculosLocais.findIndex(item => item.id === id);
         if (index !== -1) {
             dados.id = id;
             veiculosLocais[index] = dados;
         }
     } else {
-        // Inserir novo veículo gerando um ID único local
         dados.id = 'id_' + Math.random().toString(36).substr(2, 9);
         veiculosLocais.push(dados);
     }
@@ -115,7 +113,7 @@ function salvarVeiculo() {
     buscarVeiculos();
 }
 
-// Preencher formulário para editar os dados cadastrais
+// Preencher formulário para editar
 function carregarParaEdicao(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
@@ -132,6 +130,19 @@ function carregarParaEdicao(id) {
     document.getElementById('form-title').innerText = "Editar Cadastro do Veículo";
     document.getElementById('btn-salvar').innerText = "Salvar Alterações";
     document.getElementById('btn-cancelar').style.display = "block";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Função para Excluir Veículo (NOVA)
+function excluirVeiculo(id) {
+    const v = veiculosLocais.find(item => item.id === id);
+    if (!v) return;
+
+    if (confirm(`Tem certeza que deseja excluir o veículo de ${v.cliente} (Placa: ${v.placa})?`)) {
+        veiculosLocais = veiculosLocais.filter(item => item.id !== id);
+        salvarNoLocalStorage();
+        buscarVeiculos();
+    }
 }
 
 function limparFormulario() {
@@ -149,7 +160,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Disparar notificação para o WhatsApp do cliente (CORRIGIDO E SEGURO)
+// Disparar notificação para o WhatsApp (CORRIGIDO PARA IGNORAR BLOQUEIO DE POPUP)
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
@@ -165,5 +176,7 @@ function notificarWhatsApp(id) {
     }
 
     const urlWhatsapp = "https://whatsapp.com" + numeroLimpo + "&text=" + encodeURIComponent(textoMensagem);
-    window.open(urlWhatsapp, '_blank');
+    
+    // Método modificado para não ser barrado pelas restrições de pop-up da aba anônima
+    window.location.href = urlWhatsapp;
 }
