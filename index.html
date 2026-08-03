@@ -125,8 +125,9 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://bwrbduzlcbfbsrrnowam.supabase.co/rest/v1/";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw"; // <-- APAGUE ESSE TEXTO E COLE SUA CHAVE DO SUPABASE AQUI
+        const SUPABASE_URL = "https://supabase.co";
+        // IMPORTANTE: LEMBRE-SE DE COLAR A SUA CHAVE DO SUPABASE ENTRE AS ASPAS ABAIXO:
+        const SUPABASE_KEY = "COLE_A_SUA_CHAVE_PUBLICA_AQUI"; 
 
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
         const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
