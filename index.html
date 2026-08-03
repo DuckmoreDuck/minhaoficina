@@ -10,7 +10,7 @@
         header { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 15px; text-align: center; }
         .form-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
-        .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 10px; }
         input, textarea, button, select { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         textarea { resize: vertical; height: 45px; }
         button { background-color: #1e3a8a; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -66,6 +66,7 @@
             <input type="text" id="placa" placeholder="Placa (ex: ABC1234)">
             <input type="text" id="cliente" placeholder="Nome do Cliente">
             <input type="tel" id="whatsapp" placeholder="Zap (ex: 11999998888)">
+        </div> <!-- FECHAMENTO CORRIGIDO AQUI -->
     
         <div class="form-row-2">
             <textarea id="observacoes" placeholder="Observações (O que será feito no veículo?)"></textarea>
@@ -96,7 +97,7 @@
         </div>
     </div>
 
-    <!-- JANELA FLUTUANTE DE EDIÇÃO (MODAL) -->
+    <!-- JANELA FLUTUANTE DE EDIÇÃO (MODAL) CORRIGIDO E FECHADO -->
     <div id="modalEdicao" class="modal-bg">
         <div class="modal-box">
             <h3>✏️ Editar Ficha do Veículo</h3>
@@ -114,41 +115,45 @@
             <label>WhatsApp (Apenas números)</label>
             <input type="tel" id="edit-whatsapp">
             
-            <label>Observações do Serviço</label>
+            <label>Observações</label>
             <textarea id="edit-observacoes"></textarea>
-            
+
+            <label>Mecânico Responsável</label>
+            <input type="text" id="edit-mecanico" placeholder="Nome do mecânico">
+
             <div class="modal-actions">
-                <button onclick="fecharModal()" class="btn-cancel" style="width: 100px;">Cancelar</button>
-                <button onclick="salvarEdicaoFicha()" style="width: 120px;">Salvar</button>
+                <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button onclick="salvarEdicao()">Salvar Alterações</button>
             </div>
         </div>
     </div>
 
+    <!-- LÓGICA EM JAVASCRIPT ADICIONADA -->
     <script>
-        const SUPABASE_URL = "https://supabase.co";
-        // IMPORTANTE: LEMBRE-SE DE COLAR A SUA CHAVE DO SUPABASE ENTRE AS ASPAS ABAIXO:
-        const SUPABASE_KEY = "COLE_A_SUA_CHAVE_PUBLICA_AQUI"; 
+        let veiculos = JSON.parse(localStorage.getItem('oficina_veiculos')) || [];
 
-        const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
-        const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
-        
-        let localVeiculosCache = []; 
-        let isModalOpen = false; 
-
-        async function carregarDados() {
-            try {
-                const response = await fetch(SUPABASE_URL + "?select=*&order=created_at.asc", { method: "GET", headers: headers });
-                if (!response.ok) throw new Error("Erro na API");
-                const dados = await response.json();
-                localVeiculosCache = dados; 
-                return dados;
-            } catch (err) {
-                console.error("Erro ao ler dados da nuvem:", err);
-                return localVeiculosCache;
-            }
+        function salvarNoLocalStorage() {
+            localStorage.setItem('oficina_veiculos', JSON.stringify(veiculos));
         }
 
-        async function adicionarVeiculo() {
-            const txtVeiculo = document.getElementById('veiculo');
-            const txtPlaca = document.getElementById('placa');
-            const txtCliente = document.getElementById('cliente');
+        function adicionarVeiculo() {
+            const veiculoInput = document.getElementById('veiculo');
+            const placaInput = document.getElementById('placa');
+            const clienteInput = document.getElementById('cliente');
+            const whatsappInput = document.getElementById('whatsapp');
+            const obsInput = document.getElementById('observacoes');
+
+            if (!veiculoInput.value || !clienteInput.value) {
+                alert('Por favor, preencha pelo menos o Veículo e o Nome do Cliente.');
+                return;
+            }
+
+            const novoVeiculo = {
+                id: Date.now(),
+                veiculo: veiculoInput.value,
+                placa: placaInput.value,
+                cliente: clienteInput.value,
+                whatsapp: whatsappInput.value.replace(/\D/g, ''), // Mantém apenas números
+                observacoes: obsInput.value,
+                mecanico: '',
+                status: 0 // Inicia em "Agendado"
