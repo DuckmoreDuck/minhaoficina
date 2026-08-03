@@ -46,7 +46,7 @@
             <input type="text" id="veiculo" placeholder="Veículo (ex: Civic)">
             <input type="text" id="placa" placeholder="Placa (ex: ABC1234)">
             <input type="text" id="cliente" placeholder="Nome do Cliente">
-            <input type="tel" id="whatsapp" placeholder="Zap (com DDD, só números)">
+            <input type="tel" id="whatsapp" placeholder="Zap (ex: 11999998888)">
             <button onclick="adicionarVeiculo()">+ Cadastrar</button>
         </div>
     </header>
@@ -79,6 +79,7 @@
                 return;
             }
 
+            // Remove tudo que não for número
             const limpaWhats = txtWhatsapp.value.replace(/\D/g, '');
 
             const novo = {
@@ -123,8 +124,11 @@
                 if (carro.status > 0) botoes += `<button class="btn-move" onclick="alterarStatus(${carro.id}, -1)">◀</button>`;
                 if (carro.status < 4) botoes += `<button class="btn-move" onclick="alterarStatus(${carro.id}, 1)">▶</button>`;
                 
+                // Mensagem personalizada codificada para a URL
                 const textoWhats = encodeURIComponent(`Olá ${carro.cliente}! Informamos que o seu veículo ${carro.modelo} (Placa: ${carro.placa}) mudou de status na oficina e agora está em: *${statusNomes[carro.status]}*.`);
-                const linkWhats = `https://wa.me{carro.whatsapp}?text=${textoWhats}`;
+                
+                // LINK CORRIGIDO AQUI: Usa a variável certa com o número do cliente
+                const linkWhats = `https://whatsapp.com{carro.whatsapp}&text=${textoWhats}`;
 
                 card.innerHTML = `
                     <h4>${carro.modelo}</h4>
