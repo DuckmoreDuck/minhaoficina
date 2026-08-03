@@ -79,7 +79,9 @@
             <div class="cards-container" id="status-4" ondragover="allowDrop(event)" ondrop="drop(event, 4)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)"></div>
         </div>
     </div>
+    </div>
 
+    <!-- VOCÊ PRECISA DESTA TAG AQUI PARA ABRIR O JAVASCRIPT -->
     <script>
         const statusNomes = ["Agendado", "Em Triagem/Entrada", "Em Execução", "Finalizado! Pronto para retirada", "Retirado da oficina"];
         let veiculos = JSON.parse(localStorage.getItem('oficina_veiculos')) || [];
@@ -179,3 +181,29 @@
 
                 const cardHtml = `
                     <div class="card" draggable="true" ondragstart="drag(event, ${carro.id})">
+                        <h4>${carro.modelo}</h4>
+                        <p><strong>Placa:</strong> ${carro.placa}</p>
+                        <p class="client-info">👤 ${carro.cliente}</p>
+                        <div class="obs-box">${carro.observacoes}</div>
+                        
+                        <div class="mecanico-box">
+                            ${carro.mecanico ? `<span class="mecanico-tag">🛠️ ${carro.mecanico}</span>` : ''}
+                            <input type="text" placeholder="Mecânico..." value="${carro.mecanico}" 
+                                   onchange="atualizarMecanico(${carro.id}, this.value); renderizarPainel();">
+                        </div>
+
+                        <div class="card-actions">
+                            <a href="${linkWhats}" target="_blank" class="btn-whatsapp">💬 Enviar Zap</a>
+                            <button class="btn-del" onclick="deletarVeiculo(${carro.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        window.onload = renderizarPainel;
+    </script> <!-- VOCÊ PRECISA DESTA TAG AQUI PARA FECHAR O JAVASCRIPT -->
+
+</body>
+</html>
