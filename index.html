@@ -9,44 +9,35 @@
         body { background-color: #f4f6f9; padding: 20px; color: #333; }
         header { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 15px; text-align: center; }
-        
         .form-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
         .form-row-2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
         input, textarea, button { padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         textarea { resize: vertical; height: 45px; }
-        
         button { background-color: #1e3a8a; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #1d4ed8; }
-        
         .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; align-items: start; }
         .column { background: #eaedf2; border-radius: 8px; padding: 15px; min-height: 600px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .column-header { text-align: center; font-weight: bold; margin-bottom: 15px; padding: 8px; border-radius: 4px; color: white; text-transform: uppercase; font-size: 13px; }
-        
         .col-agendado { background-color: #6b7280; }
         .col-entrada { background-color: #3b82f6; }
         .col-execucao { background-color: #f59e0b; }
         .col-finalizado { background-color: #10b981; }
         .col-retirado { background-color: #ef4444; }
-
         .cards-container { min-height: 530px; }
-
         .card { background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 5px solid #1e3a8a; cursor: grab; user-select: none; }
         .card:active { cursor: grabbing; }
         .card h4 { font-size: 16px; margin-bottom: 4px; text-transform: uppercase; color: #111827; }
         .card p { font-size: 13px; color: #4b5563; margin-bottom: 4px; }
-        
         .card .obs-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 6px; border-radius: 4px; font-size: 12px; margin-top: 5px; color: #374151; max-height: 60px; overflow-y: auto; }
         .card .mecanico-box { margin-top: 8px; font-size: 13px; display: flex; gap: 5px; align-items: center; }
         .card .mecanico-box input { padding: 4px 8px; font-size: 12px; }
         .card .mecanico-tag { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; border: 1px solid #fcd34d; }
         .card .client-info { font-weight: bold; color: #1e3a8a; margin-top: 5px; border-top: 1px dashed #e5e7eb; padding-top: 5px; }
-        
         .card-actions { display: flex; justify-content: space-between; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px; }
-        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 6px; width: 100%; font-size: 14px; font-weight: bold; }
+        .btn-whatsapp { background-color: #25d366; color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 8px; width: 100%; font-size: 13px; font-weight: bold; text-align: center; }
         .btn-whatsapp:hover { background-color: #20ba5a; }
         .btn-del { background: #fee2e2; color: #dc2626; max-width: 40px; border: none; border-radius: 4px; cursor: pointer; }
         .btn-del:hover { background: #fca5a5; }
-        
         .drag-over { background: #d1d5db !important; border: 2px dashed #9ca3af; }
     </style>
 </head>
@@ -143,7 +134,6 @@
             }
         }
 
-        /* --- Funções de Drag and Drop (Arrastar) --- */
         function drag(event, id) {
             event.dataTransfer.setData("text/plain", id);
         }
@@ -165,7 +155,7 @@
             event.currentTarget.classList.remove('drag-over');
             const id = parseInt(event.dataTransfer.getData("text/plain"));
             const carro = veiculos.find(v => v.id === id);
-            if (carro && carro.status !== novoStatus) {
+            if (carro) {
                 carro.status = novoStatus;
                 salvarDados();
             }
@@ -182,10 +172,14 @@
                 card.draggable = true;
                 card.ondragstart = (e) => drag(e, carro.id);
                 
-                // Configuração do bloco do mecânico com base no status
                 let mecanicoHTML = '';
-                if (carro.status === 2) { // Status 2 é Execução
+                if (carro.status === 2) {
                     mecanicoHTML = `
                         <div class="mecanico-box">
                             <label style="font-size:12px; font-weight:bold;">Mecânico:</label>
-                            <input type="text" value="${carro.mecanico}" placeholder="Nome do mecânico" onchange="atualizarMecanico(${carro.id}, this.value)">
+                            <input type="text" value="${carro.mecanico}" placeholder="Nome" onchange="atualizarMecanico(${carro.id}, this.value)">
+                        </div>
+                    `;
+                } else if (carro.mecanico) {
+                    mecanicoHTML = `
+                        <div class="mecanico-box">
