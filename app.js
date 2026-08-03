@@ -172,7 +172,7 @@ function notificarWhatsApp(id) {
     const txt = encodeURIComponent(`Olá ${v.cliente}! O veículo de placa *${v.placa}* mudou de status para: *${v.status}*.`);
     
     // URL direta do WhatsApp Web que funciona universalmente
-    const urlCompleta = `https://webwhatsapp.com{num}&text=${txt}`;
+    const urlCompleta = `https://web.whatsapp.com{num}&text=${txt}`;
     
     window.open(urlCompleta, '_blank');
 }
