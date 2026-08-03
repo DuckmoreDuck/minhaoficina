@@ -133,7 +133,7 @@ function carregarParaEdicao(id) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Função para Excluir Veículo (NOVA)
+// Função para Excluir Veículo
 function excluirVeiculo(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
@@ -160,23 +160,19 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Disparar notificação para o WhatsApp (CORRIGIDO PARA IGNORAR BLOQUEIO DE POPUP)
+// Função do WhatsApp com URL padrão Web (Evita erros de redirecionamento de abas)
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
-        alert("Número de telefone não cadastrado para este cliente.");
+        alert("Número de telefone não cadastrado.");
         return;
     }
 
-    const numeroLimpo = v.telefone.replace(/\D/g, '');
-    let textoMensagem = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
+    const num = v.telefone.replace(/\D/g, '');
+    const txt = encodeURIComponent(`Olá ${v.cliente}! O veículo de placa *${v.placa}* mudou de status para: *${v.status}*.`);
     
-    if (v.status === 'FINALIZADO') {
-        textoMensagem += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
-    }
-
-    const urlWhatsapp = "https://whatsapp.com" + numeroLimpo + "&text=" + encodeURIComponent(textoMensagem);
+    // URL direta do WhatsApp Web que funciona universalmente
+    const urlCompleta = `https://whatsapp.com{num}&text=${txt}`;
     
-    // Método modificado para não ser barrado pelas restrições de pop-up da aba anônima
-    window.location.href = urlWhatsapp;
+    window.open(urlCompleta, '_blank');
 }
