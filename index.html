@@ -142,6 +142,7 @@
             window.open(url, '_blank', 'noopener,noreferrer');
         }
 
+        // FUNÇÃO ADICIONADA AQUI PARA FAZER O COMPORTAMENTO DE ARRASTAR FUNCIONAR SEM TRAVAR
         function allowDrop(event) {
             event.preventDefault();
         }
@@ -176,5 +177,3 @@
 
             veiculos.forEach(carro => {
                 const card = document.createElement('div');
-                card.className = 'card';
-                card.draggable = true;
