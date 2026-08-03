@@ -1,42 +1,45 @@
-// Configuração do Supabase com as suas credenciais
-const SUPABASE_URL = "https://bwrbduzlcbfbsrrnowam.supabase.co";
+// Configuração do Supabase
+const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Conexão corrigida (usando o objeto global 'supabase' da biblioteca)
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let veiculosLocais = [];
 
-// Inicialização
+// Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
     buscarVeiculos();
     escutarAlteracoes();
     document.getElementById('data_agendamento').valueAsDate = new Date();
 });
 
-// Buscar dados iniciais
+// Buscar dados iniciais do banco
 async function buscarVeiculos() {
-    const { data, error } = await supabase.from('veiculos').select('*');
-    if (error) console.error("Erro ao buscar dados:", error);
-    else {
-        veiculosLocais = data;
+    const { data, error } = await db.from('veiculos').select('*');
+    if (error) {
+        console.error("Erro ao buscar dados:", error);
+    } else {
+        veiculosLocais = data || [];
         renderizarPainel();
     }
 }
 
-// Atualização Automática Realtime (Multi-dispositivos)
+// Atualização Automática em tempo real (Multi-dispositivos)
 function escutarAlteracoes() {
-    supabase.channel('custom-all-channel')
+    db.channel('custom-all-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, (payload) => {
-        buscarVeiculos(); // Recarrega do banco quando houver qualquer mudança externa
+        buscarVeiculos();
     })
     .subscribe();
 }
 
-// Renderizar os Cards na Tela
+// Renderizar os Cards na Tela nas colunas corretas
 function renderizarPainel() {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
-        document.querySelector(`#col-${col} .cards-container`).innerHTML = '';
+        const container = document.querySelector(`#col-${col} .cards-container`);
+        if (container) container.innerHTML = '';
     });
 
     veiculosLocais.forEach(v => {
@@ -64,24 +67,24 @@ function renderizarPainel() {
     });
 }
 
-// Funções de Arrastar e Soltar (Drag and Drop)
+// Funções para Arrastar e Soltar (Drag and Drop)
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text", id); }
 async function drop(ev, novoStatus) {
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text");
     
-    // Atualiza localmente para resposta rápida
+    // Atualização visual rápida na tela
     const veiculo = veiculosLocais.find(v => v.id === id);
     if(veiculo) veiculo.status = novoStatus;
     renderizarPainel();
 
-    // Salva no banco de dados
-    const { error } = await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id);
-    if (error) console.error("Erro ao atualizar status:", error);
+    // Salva a alteração de coluna no banco de dados
+    const { error } = await db.from('veiculos').update({ status: novoStatus }).eq('id', id);
+    if (error) console.error("Erro ao atualizar status no banco:", error);
 }
 
-// Adicionar ou Atualizar Cadastro
+// Adicionar ou Editar Registro
 async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     const dados = {
@@ -95,24 +98,24 @@ async function salvarVeiculo() {
     };
 
     if (!dados.cliente || !dados.placa || !dados.telefone) {
-        alert("Preencha Cliente, Telefone e Placa!");
+        alert("Por favor, preencha os campos obrigatórios: Cliente, Telefone e Placa!");
         return;
     }
 
     if (id) {
-        // Modo Edição
-        const { error } = await supabase.from('veiculos').update(dados).eq('id', id);
-        if (error) alert("Erro ao atualizar!");
+        // Atualizar veículo existente
+        const { error } = await db.from('veiculos').update(dados).eq('id', id);
+        if (error) alert("Erro ao atualizar dados: " + error.message);
     } else {
-        // Novo Cadastro
-        const { error } = await supabase.from('veiculos').insert([dados]);
-        if (error) alert("Erro ao inserir!");
+        // Inserir novo veículo
+        const { error } = await db.from('veiculos').insert([dados]);
+        if (error) alert("Erro ao inserir veículo: " + error.message);
     }
     limparFormulario();
     buscarVeiculos();
 }
 
-// Carregar dados no formulário para editar
+// Preencher formulário para editar os dados cadastrais
 function carregarParaEdicao(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
@@ -146,27 +149,21 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Enviar Mensagem para o WhatsApp
+// Disparar notificação para o WhatsApp do cliente
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
-        alert("Número de telefone não encontrado para este cliente.");
+        alert("Número de telefone não cadastrado para este cliente.");
         return;
     }
 
-    // Limpa caracteres especiais do telefone deixando apenas números
     const numeroLimpo = v.telefone.replace(/\D/g, '');
-
-    // Define a mensagem dinâmica dependendo do status atual
-    let mensagem = `Olá ${v.cliente}! Passando para informar que o seu veículo de placa *${v.placa}* mudou de status na oficina para: *${v.status}*.`;
+    let mensagem = `Olá ${v.cliente}! Informamos que o veículo de placa *${v.placa}* avançou para o status: *${v.status}* na nossa oficina.`;
     
     if (v.status === 'FINALIZADO') {
-        mensagem += ` 🎉 O serviço já está concluído e pronto!`;
+        mensagem += ` 🎉 O serviço foi concluído com sucesso e já está pronto para retirada!`;
     }
 
-    // Cria o link do WhatsApp Web/App API
     const urlWhatsapp = `https://whatsapp.com{numeroLimpo}&text=${encodeURIComponent(mensagem)}`;
-    
-    // Abre em uma nova aba
     window.open(urlWhatsapp, '_blank');
 }
