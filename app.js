@@ -1,47 +1,25 @@
-// Configuração do Supabase
-const SUPABASE_URL = "https://supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw";
-
-let db = null;
 let veiculosLocais = [];
 
 // Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
-    // Código de segurança para garantir o carregamento do script externo
-    if (typeof supabase === 'undefined') {
-        alert("Erro crítico: A biblioteca do Supabase não foi carregada pela sua rede. Verifique sua conexão com a internet ou tente recarregar a página com Ctrl + F5.");
-        console.error("Biblioteca 'supabase' global não encontrada.");
-        return;
-    }
-
-    // Inicializa o cliente se tudo estiver correto
-    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    
     buscarVeiculos();
-    escutarAlteracoes();
     document.getElementById('data_agendamento').valueAsDate = new Date();
 });
 
-// Buscar dados iniciais do banco
-async function buscarVeiculos() {
-    if (!db) return;
-    const { data, error } = await db.from('veiculos').select('*');
-    if (error) {
-        console.error("Erro ao buscar dados:", error);
+// Buscar dados guardados localmente no navegador
+function buscarVeiculos() {
+    const dadosSalvos = localStorage.getItem('oficina_veiculos');
+    if (dadosSalvos) {
+        veiculosLocais = JSON.parse(dadosSalvos);
     } else {
-        veiculosLocais = data || [];
-        renderizarPainel();
+        veiculosLocais = [];
     }
+    renderizarPainel();
 }
 
-// Atualização Automática em tempo real (Multi-dispositivos)
-function escutarAlteracoes() {
-    if (!db) return;
-    db.channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, (payload) => {
-        buscarVeiculos();
-    })
-    .subscribe();
+// Salvar a lista atualizada de veículos no navegador
+function salvarNoLocalStorage() {
+    localStorage.setItem('oficina_veiculos', JSON.stringify(veiculosLocais));
 }
 
 // Renderizar os Cards na Tela nas colunas corretas
@@ -80,24 +58,21 @@ function renderizarPainel() {
 // Funções para Arrastar e Soltar (Drag and Drop)
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text", id); }
-async function drop(ev, novoStatus) {
+function drop(ev, novoStatus) {
     ev.preventDefault();
-    if (!db) return;
-    const id = ev.dataTransfer.getData("text");
+    const id = ev.dataTransfer.setData("text");
     
     // Atualização visual rápida na tela
     const veiculo = veiculosLocais.find(v => v.id === id);
-    if(veiculo) veiculo.status = novoStatus;
-    renderizarPainel();
-
-    // Salva a alteração de coluna no banco de dados
-    const { error } = await db.from('veiculos').update({ status: novoStatus }).eq('id', id);
-    if (error) console.error("Erro ao atualizar status no banco:", error);
+    if(veiculo) {
+        veiculo.status = novoStatus;
+        salvarNoLocalStorage();
+        renderizarPainel();
+    }
 }
 
 // Adicionar ou Editar Registro
-async function salvarVeiculo() {
-    if (!db) return;
+function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     const dados = {
         cliente: document.getElementById('cliente').value,
@@ -116,13 +91,18 @@ async function salvarVeiculo() {
 
     if (id) {
         // Atualizar veículo existente
-        const { error } = await db.from('veiculos').update(dados).eq('id', id);
-        if (error) alert("Erro ao atualizar dados: " + error.message);
+        const index = veiculosLocais.findIndex(item => item.id === id);
+        if (index !== -1) {
+            dados.id = id;
+            veiculosLocais[index] = dados;
+        }
     } else {
-        // Inserir novo veículo
-        const { error } = await db.from('veiculos').insert([dados]);
-        if (error) alert("Erro ao inserir veículo: " + error.message);
+        // Inserir novo veículo gerando um ID único local
+        dados.id = 'id_' + Math.random().toString(36).substr(2, 9);
+        veiculosLocais.push(dados);
     }
+    
+    salvarNoLocalStorage();
     limparFormulario();
     buscarVeiculos();
 }
