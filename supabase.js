@@ -95,6 +95,6 @@
 
 // 🟢 CONFIGURAÇÃO E INICIALIZAÇÃO DA SUA CONTA SUPABASE
 const SUPABASE_URL = 'https://bwrbduzlcbfbsrrnowam.supabase.co';
-const SUPABASE_KEY = 'SUA_CHAVE_ANON_AQUI'; // Lembre de colocar sua chave pública anon aqui
+const SUPABASE_KEY = 'SUA_CHAVE_ANON_AQUI'; // Coloque sua chave anon do Supabase aqui se ainda não colocou!
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
