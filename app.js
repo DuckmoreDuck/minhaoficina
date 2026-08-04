@@ -4,7 +4,36 @@ let veiculosLocais = [];
 document.addEventListener("DOMContentLoaded", () => {
     buscarVeiculos();
     document.getElementById('data_agendamento').valueAsDate = new Date();
+    configurarNavegacaoEnter();
 });
+
+// 🟢 Mudar de campo ao apertar "Enter" sequencialmente no formulário
+function configurarNavegacaoEnter() {
+    // Seleciona todos os inputs, selects e textareas dentro do formulário
+    const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
+
+    campos.forEach((campo, index) => {
+        campo.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Impede o envio do formulário antecipado
+
+                // Se o campo for a placa, dispara a busca local antes de mudar de campo
+                if (campo.id === 'placa') {
+                    buscarPorPlaca(campo.value);
+                }
+
+                // Move para o próximo campo disponível
+                const proximoCampo = campos[index + 1];
+                if (proximoCampo) {
+                    proximoCampo.focus();
+                } else {
+                    // Se for o último campo (ex: observações ou botão), salva o veículo
+                    salvarVeiculo();
+                }
+            }
+        });
+    });
+}
 
 // Buscar dados guardados localmente no navegador
 function buscarVeiculos() {
@@ -22,7 +51,7 @@ function salvarNoLocalStorage() {
     localStorage.setItem('oficina_veiculos', JSON.stringify(veiculosLocais));
 }
 
-// Renderizar os Cards na Tela nas colunas corretas (Ocultando os RETIRADOS por padrão)
+// Renderizar os Cards na Tela (Ocultando os RETIRADOS por padrão)
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
@@ -185,7 +214,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// 🟢 Função do WhatsApp Corrigida e Dinâmica
+// Função do WhatsApp Dinâmica
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
