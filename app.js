@@ -22,8 +22,8 @@ function salvarNoLocalStorage() {
     localStorage.setItem('oficina_veiculos', JSON.stringify(veiculosLocais));
 }
 
-// Renderizar os Cards na Tela nas colunas corretas
-function renderizarPainel() {
+// Renderizar os Cards na Tela nas colunas corretas (Ocultando os RETIRADOS por padrão)
+function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
         const container = document.querySelector(`#col-${col} .cards-container`);
@@ -31,6 +31,16 @@ function renderizarPainel() {
     });
 
     veiculosLocais.forEach(v => {
+        // Se houver filtro de busca e a placa não bater, ignora
+        if (filtroPlaca && !v.placa.toLowerCase().includes(filtroPlaca.toLowerCase())) {
+            return;
+        }
+
+        // 🟢 Se for RETIRADO e NÃO estivermos buscando por placa, ignora (some do painel)
+        if (v.status === 'RETIRADO' && !filtroPlaca) {
+            return;
+        }
+
         const container = document.querySelector(`#col-${v.status} .cards-container`);
         if (container) {
             const card = document.createElement('div');
@@ -76,6 +86,21 @@ function drop(ev, novoStatus) {
         veiculo.status = novoStatus;
         salvarNoLocalStorage();
         renderizarPainel();
+    }
+}
+
+// 🟢 Buscar veículo existente ao digitar a placa no formulário
+function buscarPorPlaca(placaDigitada) {
+    if (!placaDigitada || placaDigitada.length < 3) return;
+
+    const placaLimpa = placaDigitada.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+    const veiculoEncontrado = veiculosLocais.find(v => 
+        v.placa.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
+    );
+
+    if (veiculoEncontrado) {
+        carregarParaEdicao(veiculoEncontrado.id);
     }
 }
 
@@ -160,7 +185,7 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Função do WhatsApp corrigida
+// 🟢 Função do WhatsApp Corrigida e Dinâmica
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
@@ -168,18 +193,14 @@ function notificarWhatsApp(id) {
         return;
     }
 
-    // 1. Limpa o telefone mantendo só os números
     let num = v.telefone.replace(/\D/g, '');
 
-    // 2. Se o usuário digitou sem o DDD/DDI (ex: 11999999999), adiciona o DDI do Brasil (55)
     if (num.length >= 10 && !num.startsWith('55')) {
         num = '55' + num;
     }
 
-    // 3. Monta a mensagem personalizada por status
     let mensagemCustomizada = `Olá ${v.cliente}! Seu veículo (Placa *${v.placa}*) está no status: *${v.status}*.`;
     
-    // Opcional: Mensagens personalizadas para cada status
     switch (v.status) {
         case 'EXECUÇÃO':
             mensagemCustomizada = `Olá ${v.cliente}! Seu veículo (*${v.placa}*) já está em manutenção/execução.`;
@@ -193,10 +214,7 @@ function notificarWhatsApp(id) {
     }
 
     const txt = encodeURIComponent(mensagemCustomizada);
-    
-    // 4. URL oficial do WhatsApp (Redireciona para o Web no PC ou pro App no celular)
     const urlCompleta = `https://api.whatsapp.com/send?phone=${num}&text=${txt}`;
     
-    // Abre em uma nova aba
     window.open(urlCompleta, '_blank');
 }
