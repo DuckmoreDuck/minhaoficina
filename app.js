@@ -88,7 +88,7 @@ async function buscarVeiculos() {
     }
 }
 
-// 🟢 RENDERIZAR CARDS COM CONTADOR
+// 🟢 RENDERIZAR CARDS COM CONTADOR E PESQUISA OTIMIZADA
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     const contadores = { AGENDADO: 0, ENTRADA: 0, EXECUÇÃO: 0, FINALIZADO: 0, RETIRADO: 0 };
@@ -103,8 +103,11 @@ function renderizarPainel(filtroPlaca = '') {
             return;
         }
 
-        if (v.status === 'RETIRADO' && !filtroPlaca) {
-            return;
+        // Alteração: Veículos retirados agora são exibidos se houver uma pesquisa ativa
+        if (v.status === 'RETIRADO' && filtroPlaca) {
+            // Exibir veículos retirados na pesquisa
+        } else if (v.status === 'RETIRADO') {
+            return; // Ocultar veículos retirados quando não houver pesquisa
         }
 
         if (contadores[v.status] !== undefined) {
