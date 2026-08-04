@@ -35,7 +35,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 FUNÇÕES DRAG & DROP NATIVAS (DESKTOP E SUPORTE TOUCH)
+// 🟢 FUNÇÕES DRAG & DROP NATIVAS (DESKTOP E TOUCH)
 function dragStart(ev, id) {
     cardSendoArrastadoId = id;
     ev.dataTransfer.setData("text/plain", id);
@@ -88,9 +88,11 @@ async function buscarVeiculos() {
     }
 }
 
-// 🟢 RENDERIZAR CARDS
+// 🟢 RENDERIZAR CARDS COM CONTADOR
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
+    const contadores = { AGENDADO: 0, ENTRADA: 0, EXECUÇÃO: 0, FINALIZADO: 0, RETIRADO: 0 };
+
     colunas.forEach(col => {
         const container = document.getElementById(`container-${col}`);
         if (container) container.innerHTML = '';
@@ -103,6 +105,10 @@ function renderizarPainel(filtroPlaca = '') {
 
         if (v.status === 'RETIRADO' && !filtroPlaca) {
             return;
+        }
+
+        if (contadores[v.status] !== undefined) {
+            contadores[v.status]++;
         }
 
         const container = document.getElementById(`container-${v.status}`);
@@ -121,7 +127,7 @@ function renderizarPainel(filtroPlaca = '') {
 
                 <!-- MOVER RÁPIDO NO PRÓPRIO CARD -->
                 <div class="fast-move">
-                    <span style="font-size: 11px; font-weight: bold; color: #666;">Status:</span>
+                    <span style="font-size: 10px; font-weight: bold; color: #666;">Status:</span>
                     <select onchange="atualizarStatusNoSupabase('${v.id}', this.value)">
                         <option value="AGENDADO" ${v.status === 'AGENDADO' ? 'selected' : ''}>AGENDADO</option>
                         <option value="ENTRADA" ${v.status === 'ENTRADA' ? 'selected' : ''}>ENTRADA</option>
@@ -138,12 +144,17 @@ function renderizarPainel(filtroPlaca = '') {
                 </div>
             `;
 
-            // Adiciona suporte para arrastar com o dedo em aparelhos celulares
             adicionarSuporteTouch(card, v.id);
-
             container.appendChild(card);
         }
     });
+
+    // Atualiza os títulos com as contagens
+    document.querySelector('#col-AGENDADO h3').innerText = `📅 AGENDADO (${contadores.AGENDADO})`;
+    document.querySelector('#col-ENTRADA h3').innerText = `🚗 ENTRADA (${contadores.ENTRADA})`;
+    document.querySelector('#col-EXECUÇÃO h3').innerText = `🛠️ EXECUÇÃO (${contadores.EXECUÇÃO})`;
+    document.querySelector('#col-FINALIZADO h3').innerText = `✅ FINALIZADO (${contadores.FINALIZADO})`;
+    document.querySelector('#col-RETIRADO h3').innerText = `🏁 RETIRADO (${contadores.RETIRADO})`;
 }
 
 // 🟢 SUPORTE A TOUCH (CELULAR)
@@ -168,7 +179,7 @@ function adicionarSuporteTouch(card, id) {
     }, { passive: true });
 }
 
-// 🟢 ATUALIZAR STATUS NO SUPABASE (CORRIGIDO)
+// 🟢 ATUALIZAR STATUS NO SUPABASE
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
