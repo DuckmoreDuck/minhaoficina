@@ -1,23 +1,17 @@
 let veiculosLocais = [];
 
-// Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", async () => {
-    // Define a data atual como padrão no formulário
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('data_agendamento').value = hoje;
 
     configurarNavegacaoEnter();
-    
-    // 1. Busca os veículos do Supabase na primeira carga
     await buscarVeiculos();
 
-    // 2. Escuta alterações em tempo real / Polling configurado no supabase.js
     if (typeof _supabase !== 'undefined' && _supabase.channel) {
         _supabase.channel('mudancas-veiculos').subscribe();
     }
 });
 
-// Mudar de campo ao apertar "Enter" sequencialmente
 function configurarNavegacaoEnter() {
     const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
 
@@ -88,8 +82,21 @@ function renderizarPainel(filtroPlaca = '') {
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
+
+                <!-- Seletor Rápido de Mover Status (Ideal para Celular) -->
+                <div class="move-select-container">
+                    <label>Mover para:</label>
+                    <select onchange="moverStatusPorSelect('${v.id}', this.value)">
+                        <option value="AGENDADO" ${v.status === 'AGENDADO' ? 'selected' : ''}>📅 AGENDADO</option>
+                        <option value="ENTRADA" ${v.status === 'ENTRADA' ? 'selected' : ''}>🚗 ENTRADA</option>
+                        <option value="EXECUÇÃO" ${v.status === 'EXECUÇÃO' ? 'selected' : ''}>🛠️ EXECUÇÃO</option>
+                        <option value="FINALIZADO" ${v.status === 'FINALIZADO' ? 'selected' : ''}>✅ FINALIZADO</option>
+                        <option value="RETIRADO" ${v.status === 'RETIRADO' ? 'selected' : ''}>🏁 RETIRADO</option>
+                    </select>
+                </div>
+
                 <div class="card-actions">
-                    <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">Editar</button>
+                    <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">✏️ Editar</button>
                     <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
                     <button style="background: #e74c3c;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
                 </div>
@@ -99,6 +106,7 @@ function renderizarPainel(filtroPlaca = '') {
     });
 }
 
+// 🟢 FUNÇÃO DRAG & DROP CORRIGIDA PARA DESKTOP
 function allowDrop(ev) { 
     ev.preventDefault(); 
 }
@@ -107,13 +115,22 @@ function drag(ev, id) {
     ev.dataTransfer.setData("text/plain", id); 
 }
 
-// 🟢 Atualizar o status ao arrastar o card (Salva no Supabase)
 async function drop(ev, novoStatus) {
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
     
     if (!id) return;
 
+    await atualizarStatusNoSupabase(id, novoStatus);
+}
+
+// 🟢 MOVER STATUS VIA SELECT (MUITO MAIS FÁCIL NO CELULAR)
+async function moverStatusPorSelect(id, novoStatus) {
+    await atualizarStatusNoSupabase(id, novoStatus);
+}
+
+// Função auxiliar central de atualização
+async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
             .from('veiculos')
@@ -142,7 +159,7 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-// 🟢 Salvar ou Editar Veículo no Supabase (Suporte a UUID automático)
+// 🟢 Salvar ou Editar Veículo
 async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     const dataCampo = document.getElementById('data_agendamento').value;
@@ -164,7 +181,6 @@ async function salvarVeiculo() {
 
     try {
         if (id) {
-            // Atualizar registro existente
             const { error } = await _supabase
                 .from('veiculos')
                 .update(dados)
@@ -172,7 +188,6 @@ async function salvarVeiculo() {
 
             if (error) throw error;
         } else {
-            // Novo cadastro: Não passa 'id' para deixar o Supabase gerar o UUID gen_random_uuid()
             const { error } = await _supabase
                 .from('veiculos')
                 .insert([dados]);
@@ -207,7 +222,6 @@ function carregarParaEdicao(id) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// 🟢 Excluir Veículo do Supabase
 async function excluirVeiculo(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
