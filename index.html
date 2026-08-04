@@ -4,68 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Painel de Veículos - Oficina</title>
+    <!-- Biblioteca leve de Drag and Drop com Suporte a Touch/Celular -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.css">
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f6f9; margin: 0; padding: 15px; }
-        h1 { color: #2c3e50; font-size: 22px; margin-top: 5px; text-align: center; }
+        body { background-color: #f4f6f9; margin: 0; padding: 12px; }
+        h1 { color: #2c3e50; font-size: 20px; margin: 0 0 12px 0; text-align: center; }
         
         input[type="text"], textarea { text-transform: uppercase; }
 
-        .form-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
+        .form-container { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
-        .form-group input:focus, .form-group select:focus { border-color: #3498db; }
+        .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 100%; outline: none; }
         
-        .form-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center; }
+        .form-actions { display: flex; gap: 8px; }
+        .btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; }
         .btn-success { background: #27ae60; color: white; }
         .btn-secondary { background: #95a5a6; color: white; }
 
-        .search-container { margin-bottom: 20px; }
-        .search-container input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
+        .search-container { margin-bottom: 12px; }
+        .search-container input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; }
 
-        /* KANBAN LAYOUT RESPONSIVO */
-        .kanban { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
-        .column { background: #ebedf0; border-radius: 10px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
-        .column h3 { margin: 0 0 12px 0; font-size: 15px; color: #2c3e50; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; text-align: center; }
-        .cards-container { flex: 1; min-height: 100px; }
+        /* KANBAN COM ROLAGEM HORIZONTAL NO CELULAR */
+        .kanban-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
+        }
 
-        /* CARDS */
-        .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); cursor: grab; transition: transform 0.1s ease; }
-        .card:active { cursor: grabbing; transform: scale(0.98); }
-        .card h4 { margin: 0 0 6px 0; color: #2c3e50; font-size: 16px; text-transform: uppercase; }
-        .card p { margin: 3px 0; font-size: 13px; color: #555; }
-        .card p strong { color: #2c3e50; }
+        .kanban { 
+            display: flex; 
+            gap: 12px; 
+            min-width: max-content; /* Garante que os status fiquem lado a lado */
+        }
+
+        .column { 
+            background: #ebedf0; 
+            border-radius: 10px; 
+            padding: 10px; 
+            width: 280px; /* Largura fixa ideal para ver lado a lado no celular */
+            flex-shrink: 0;
+            display: flex; 
+            flex-direction: column; 
+            max-height: 75vh;
+        }
+
+        .column h3 { margin: 0 0 10px 0; font-size: 14px; color: #2c3e50; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px; text-align: center; }
         
-        /* BOTÃO MOVER EM CELULAR */
-        .move-select-container { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee; display: flex; align-items: center; gap: 5px; }
-        .move-select-container label { font-size: 11px; font-weight: bold; color: #7f8c8d; }
-        .move-select-container select { font-size: 12px; padding: 4px; border-radius: 4px; border: 1px solid #ddd; background: #f8f9fa; flex: 1; }
+        .cards-container { 
+            flex: 1; 
+            min-height: 150px; 
+            overflow-y: auto; 
+            padding: 4px;
+        }
+
+        /* CARDS ARRASTÁVEIS */
+        .card { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
+            cursor: grab; 
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .card h4 { margin: 0 0 4px 0; color: #2c3e50; font-size: 15px; }
+        .card p { margin: 2px 0; font-size: 12px; color: #555; }
+        
+        .guia-instrucoes {
+            text-align: center;
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
 
         /* AÇÕES DO CARD */
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
-        .card-actions button { padding: 8px 4px; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: white; font-weight: bold; text-align: center; }
+        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; }
+        .card-actions button { padding: 6px 2px; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; color: white; font-weight: bold; }
 
-        /* OTIMIZAÇÃO PARA TELAS DE CELULAR (< 600px) */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            h1 { font-size: 18px; }
-            .kanban { display: flex; flex-direction: column; gap: 15px; }
-            .column { min-height: auto; }
-            .card-actions { grid-template-columns: 1fr; } /* Botões em pilha no celular para fácil toque */
-            .card-actions button { padding: 10px; font-size: 12px; }
+        /* Estilo para quando estiver segurando/arrastando o card */
+        .gu-mirror {
+            position: fixed !important;
+            margin: 0 !important;
+            z-index: 9999 !important;
+            opacity: 0.85;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
+        .gu-transit { opacity: 0.2; }
     </style>
 </head>
 <body>
 
-    <h1>📋 Painel de Controle da Oficina</h1>
+    <h1>📋 Oficina - Controle de Veículos</h1>
 
     <!-- FORMULÁRIO -->
     <div class="form-container">
-        <h2 id="form-title" style="font-size: 16px; margin-top:0;">Cadastrar Novo Veículo</h2>
+        <h2 id="form-title" style="font-size: 14px; margin-top:0;">Cadastrar Novo Veículo</h2>
         <form id="form-veiculo">
             <input type="hidden" id="veiculo-id">
             
@@ -87,11 +126,11 @@
                     <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO">
                 </div>
                 <div class="form-group">
-                    <label for="data_agendamento">Data de Agendamento</label>
+                    <label for="data_agendamento">Data Agendamento</label>
                     <input type="date" id="data_agendamento">
                 </div>
                 <div class="form-group">
-                    <label for="status">Status</label>
+                    <label for="status">Status Inicial</label>
                     <select id="status">
                         <option value="AGENDADO">AGENDADO</option>
                         <option value="ENTRADA">ENTRADA</option>
@@ -102,9 +141,9 @@
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 15px;">
+            <div class="form-group" style="margin-bottom: 10px;">
                 <label for="observacoes">Observações</label>
-                <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO OU SERVIÇO"></textarea>
+                <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO"></textarea>
             </div>
 
             <div class="form-actions">
@@ -119,31 +158,36 @@
         <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa..." oninput="renderizarPainel(this.value)">
     </div>
 
-    <!-- KANBAN -->
-    <div class="kanban">
-        <div class="column" id="col-AGENDADO" ondrop="drop(event, 'AGENDADO')" ondragover="allowDrop(event)">
-            <h3>📅 AGENDADO</h3>
-            <div class="cards-container"></div>
-        </div>
-        <div class="column" id="col-ENTRADA" ondrop="drop(event, 'ENTRADA')" ondragover="allowDrop(event)">
-            <h3>🚗 ENTRADA</h3>
-            <div class="cards-container"></div>
-        </div>
-        <div class="column" id="col-EXECUÇÃO" ondrop="drop(event, 'EXECUÇÃO')" ondragover="allowDrop(event)">
-            <h3>🛠️ EXECUÇÃO</h3>
-            <div class="cards-container"></div>
-        </div>
-        <div class="column" id="col-FINALIZADO" ondrop="drop(event, 'FINALIZADO')" ondragover="allowDrop(event)">
-            <h3>✅ FINALIZADO</h3>
-            <div class="cards-container"></div>
-        </div>
-        <div class="column" id="col-RETIRADO" ondrop="drop(event, 'RETIRADO')" ondragover="allowDrop(event)">
-            <h3>🏁 RETIRADO</h3>
-            <div class="cards-container"></div>
+    <div class="guia-instrucoes">👈 Deslize para o lado para ver todos os status | Pressione e arraste o card para mover 👉</div>
+
+    <!-- KANBAN COM SCROLL HORIZONTAL -->
+    <div class="kanban-wrapper">
+        <div class="kanban">
+            <div class="column" id="col-AGENDADO" data-status="AGENDADO">
+                <h3>📅 AGENDADO</h3>
+                <div class="cards-container" id="container-AGENDADO"></div>
+            </div>
+            <div class="column" id="col-ENTRADA" data-status="ENTRADA">
+                <h3>🚗 ENTRADA</h3>
+                <div class="cards-container" id="container-ENTRADA"></div>
+            </div>
+            <div class="column" id="col-EXECUÇÃO" data-status="EXECUÇÃO">
+                <h3>🛠️ EXECUÇÃO</h3>
+                <div class="cards-container" id="container-EXECUÇÃO"></div>
+            </div>
+            <div class="column" id="col-FINALIZADO" data-status="FINALIZADO">
+                <h3>✅ FINALIZADO</h3>
+                <div class="cards-container" id="container-FINALIZADO"></div>
+            </div>
+            <div class="column" id="col-RETIRADO" data-status="RETIRADO">
+                <h3>🏁 RETIRADO</h3>
+                <div class="cards-container" id="container-RETIRADO"></div>
+            </div>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
+    <!-- Script Dragula para Drag & Drop Touch -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 </body>
