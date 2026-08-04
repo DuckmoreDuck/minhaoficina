@@ -7,27 +7,23 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarNavegacaoEnter();
 });
 
-// 🟢 Mudar de campo ao apertar "Enter" sequencialmente no formulário
+// Mudar de campo ao apertar "Enter" sequencialmente
 function configurarNavegacaoEnter() {
-    // Seleciona todos os inputs, selects e textareas dentro do formulário
     const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
 
     campos.forEach((campo, index) => {
         campo.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Impede o envio do formulário antecipado
+                e.preventDefault();
 
-                // Se o campo for a placa, dispara a busca local antes de mudar de campo
                 if (campo.id === 'placa') {
                     buscarPorPlaca(campo.value);
                 }
 
-                // Move para o próximo campo disponível
                 const proximoCampo = campos[index + 1];
                 if (proximoCampo) {
                     proximoCampo.focus();
                 } else {
-                    // Se for o último campo (ex: observações ou botão), salva o veículo
                     salvarVeiculo();
                 }
             }
@@ -35,7 +31,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// Buscar dados guardados localmente no navegador
+// Buscar dados guardados localmente
 function buscarVeiculos() {
     const dadosSalvos = localStorage.getItem('oficina_veiculos');
     if (dadosSalvos) {
@@ -46,12 +42,11 @@ function buscarVeiculos() {
     renderizarPainel();
 }
 
-// Salvar a lista atualizada de veículos no navegador
 function salvarNoLocalStorage() {
     localStorage.setItem('oficina_veiculos', JSON.stringify(veiculosLocais));
 }
 
-// Renderizar os Cards na Tela (Ocultando os RETIRADOS por padrão)
+// Renderizar Cards na Tela
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
@@ -60,12 +55,10 @@ function renderizarPainel(filtroPlaca = '') {
     });
 
     veiculosLocais.forEach(v => {
-        // Se houver filtro de busca e a placa não bater, ignora
         if (filtroPlaca && !v.placa.toLowerCase().includes(filtroPlaca.toLowerCase())) {
             return;
         }
 
-        // 🟢 Se for RETIRADO e NÃO estivermos buscando por placa, ignora (some do painel)
         if (v.status === 'RETIRADO' && !filtroPlaca) {
             return;
         }
@@ -81,13 +74,13 @@ function renderizarPainel(filtroPlaca = '') {
             card.innerHTML = `
                 <h4>${v.cliente}</h4>
                 <p><strong>Placa:</strong> ${v.placa}</p>
-                <p><strong>Mecânico:</strong> ${v.mecanico || 'Não atribuído'}</p>
+                <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p><strong>Data:</strong> ${v.data_agendamento}</p>
                 <p><em>${v.observacoes || ''}</em></p>
-                <div class="actions" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;">
-                    <button class="btn-edit" style="background: #3498db; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="carregarParaEdicao('${v.id}')">Editar</button>
-                    <button class="btn-whatsapp" style="background: #25D366; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
-                    <button class="btn-delete" style="background: #e74c3c; color: white; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
+                <div class="card-actions">
+                    <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">Editar</button>
+                    <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
+                    <button style="background: #e74c3c;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
                 </div>
             `;
             container.appendChild(card);
@@ -95,7 +88,6 @@ function renderizarPainel(filtroPlaca = '') {
     });
 }
 
-// Funções para Arrastar e Soltar
 function allowDrop(ev) { 
     ev.preventDefault(); 
 }
@@ -118,7 +110,6 @@ function drop(ev, novoStatus) {
     }
 }
 
-// 🟢 Buscar veículo existente ao digitar a placa no formulário
 function buscarPorPlaca(placaDigitada) {
     if (!placaDigitada || placaDigitada.length < 3) return;
 
@@ -133,17 +124,17 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-// Adicionar ou Editar Registro
 function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
+    
     const dados = {
-        cliente: document.getElementById('cliente').value,
-        telefone: document.getElementById('telefone').value,
-        placa: document.getElementById('placa').value,
-        mecanico: document.getElementById('mecanico').value,
+        cliente: document.getElementById('cliente').value.trim().toUpperCase(),
+        telefone: document.getElementById('telefone').value.trim(),
+        placa: document.getElementById('placa').value.trim().toUpperCase(),
+        mecanico: document.getElementById('mecanico').value.trim().toUpperCase(),
         data_agendamento: document.getElementById('data_agendamento').value,
         status: document.getElementById('status').value,
-        observacoes: document.getElementById('observacoes').value
+        observacoes: document.getElementById('observacoes').value.trim().toUpperCase()
     };
 
     if (!dados.cliente || !dados.placa || !dados.telefone) {
@@ -167,7 +158,6 @@ function salvarVeiculo() {
     buscarVeiculos();
 }
 
-// Preencher formulário para editar
 function carregarParaEdicao(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
@@ -183,11 +173,10 @@ function carregarParaEdicao(id) {
 
     document.getElementById('form-title').innerText = "Editar Cadastro do Veículo";
     document.getElementById('btn-salvar').innerText = "Salvar Alterações";
-    document.getElementById('btn-cancelar').style.display = "block";
+    document.getElementById('btn-cancelar').style.display = "inline-block";
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Função para Excluir Veículo
 function excluirVeiculo(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
@@ -214,7 +203,6 @@ function limparFormulario() {
     document.getElementById('btn-cancelar').style.display = "none";
 }
 
-// Função do WhatsApp Dinâmica
 function notificarWhatsApp(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v || !v.telefone) {
