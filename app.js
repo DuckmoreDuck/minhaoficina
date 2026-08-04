@@ -1,47 +1,17 @@
 let veiculosLocais = [];
-let drake = null;
+let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('data_agendamento').value = hoje;
 
     configurarNavegacaoEnter();
-    inicializarDragAndDrop();
     await buscarVeiculos();
 
     if (typeof _supabase !== 'undefined' && _supabase.channel) {
         _supabase.channel('mudancas-veiculos').subscribe();
     }
 });
-
-// 🟢 CONFIGURA O DRAG & DROP PARA CELULAR E DESKTOP VIA DRAGULA
-function inicializarDragAndDrop() {
-    const containers = [
-        document.getElementById('container-AGENDADO'),
-        document.getElementById('container-ENTRADA'),
-        document.getElementById('container-EXECUÇÃO'),
-        document.getElementById('container-FINALIZADO'),
-        document.getElementById('container-RETIRADO')
-    ];
-
-    drake = dragula(containers, {
-        moves: function (el, container, handle) {
-            // Evita arrastar se clicar nos botões do card
-            return !handle.tagName.match(/BUTTON/i);
-        }
-    });
-
-    drake.on('drop', async (el, target, source) => {
-        if (!target || target === source) return;
-
-        const id = el.getAttribute('data-id');
-        const novoStatus = target.parentElement.getAttribute('data-status');
-
-        if (id && novoStatus) {
-            await atualizarStatusNoSupabase(id, novoStatus);
-        }
-    });
-}
 
 function configurarNavegacaoEnter() {
     const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
@@ -66,7 +36,44 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 Buscar dados do Supabase
+// 🟢 FUNÇÕES DRAG & DROP NATIVAS (COMPATÍVEIS COM TODOS OS NAVEGADORES)
+function dragStart(ev, id) {
+    cardSendoArrastadoId = id;
+    ev.dataTransfer.setData("text/plain", id);
+    ev.dataTransfer.effectAllowed = "move";
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('drag-over');
+}
+
+function dragLeave(ev) {
+    ev.currentTarget.classList.remove('drag-over');
+}
+
+async function drop(ev, novoStatus) {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('drag-over');
+    
+    const id = ev.dataTransfer.getData("text/plain") || cardSendoArrastadoId;
+    if (!id) return;
+
+    await atualizarStatusNoSupabase(id, novoStatus);
+}
+
+// 🟢 NAVEGAÇÃO DE ABAS NO CELULAR
+function focarColuna(status, btnElement) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+
+    const coluna = document.getElementById(`col-${status}`);
+    if (coluna) {
+        coluna.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+}
+
+// 🟢 BUSCAR VEÍCULOS DO SUPABASE
 async function buscarVeiculos() {
     try {
         const { data, error } = await _supabase
@@ -82,7 +89,7 @@ async function buscarVeiculos() {
     }
 }
 
-// Renderizar Cards na Tela
+// RENDERIZAR CARDS
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
@@ -103,7 +110,8 @@ function renderizarPainel(filtroPlaca = '') {
         if (container) {
             const card = document.createElement('div');
             card.className = 'card';
-            card.setAttribute('data-id', v.id);
+            card.draggable = true;
+            card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
             
             card.innerHTML = `
                 <h4>${v.cliente}</h4>
@@ -112,18 +120,59 @@ function renderizarPainel(filtroPlaca = '') {
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
 
+                <!-- MOVER RÁPIDO (EXCELENTE PARA TOUCH/CELULAR) -->
+                <div class="fast-move">
+                    <span style="font-size: 11px; font-weight: bold; color: #666;">Status:</span>
+                    <select onchange="atualizarStatusNoSupabase('${v.id}', this.value)">
+                        <option value="AGENDADO" ${v.status === 'AGENDADO' ? 'selected' : ''}>AGENDADO</option>
+                        <option value="ENTRADA" ${v.status === 'ENTRADA' ? 'selected' : ''}>ENTRADA</option>
+                        <option value="EXECUÇÃO" ${v.status === 'EXECUÇÃO' ? 'selected' : ''}>EXECUÇÃO</option>
+                        <option value="FINALIZADO" ${v.status === 'FINALIZADO' ? 'selected' : ''}>FINALIZADO</option>
+                        <option value="RETIRADO" ${v.status === 'RETIRADO' ? 'selected' : ''}>RETIRADO</option>
+                    </select>
+                </div>
+
                 <div class="card-actions">
                     <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">✏️ Editar</button>
                     <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Whats</button>
                     <button style="background: #e74c3c;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
                 </div>
             `;
+
+            // Adiciona suporte a toque no celular
+            adicionarSuporteTouch(card, v.id);
+
             container.appendChild(card);
         }
     });
 }
 
-// Atualizar status no Supabase
+// 🟢 SUPORTE A TOUCH (ARRASTAR NO CELULAR SEM DEPENDÊNCIA EXTERNA)
+function adicionarSuporteTouch(card, id) {
+    let originalContainer = null;
+
+    card.addEventListener('touchstart', (e) => {
+        cardSendoArrastadoId = id;
+        originalContainer = card.parentElement;
+    }, { passive: true });
+
+    card.addEventListener('touchend', (e) => {
+        const touch = e.changedTouches[0];
+        const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (targetElement) {
+            const containerDestino = targetElement.closest('.cards-container');
+            if (containerDestino) {
+                const novoStatus = containerDestino.parentElement.getAttribute('data-status');
+                if (novoStatus) {
+                    atualizarStatusNoSupabase(id, novoStatus);
+                }
+            }
+        }
+    }, { passive: true });
+}
+
+// 🟢 ATUALIZAR STATUS NO SUPABASE
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
@@ -133,12 +182,9 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
 
         if (error) throw error;
 
-        // Atualiza na memória local
-        const v = veiculosLocais.find(item => item.id === id);
-        if (v) v.status = novoStatus;
+        await buscarVeiculos();
     } catch (err) {
         console.error("Erro ao mover veículo:", err);
-        await buscarVeiculos(); // Recarrega se der erro
     }
 }
 
@@ -156,7 +202,7 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-// 🟢 Salvar ou Editar Veículo
+// 🟢 SALVAR OU EDITAR VEÍCULO
 async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     const dataCampo = document.getElementById('data_agendamento').value;
