@@ -1,10 +1,25 @@
 let veiculosLocais = [];
 
 // Inicialização ao carregar a página
-document.addEventListener("DOMContentLoaded", () => {
-    buscarVeiculos();
+document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('data_agendamento').valueAsDate = new Date();
     configurarNavegacaoEnter();
+    
+    // 1. Busca os veículos do Supabase na primeira carga
+    await buscarVeiculos();
+
+    // 2. 🟢 ATIVA O REALTIME: Escuta alterações feitas por QUALQUER usuário em tempo real
+    _supabase
+        .channel('mudancas-veiculos')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'veiculos' },
+            (payload) => {
+                // Sempre que alguém inserir, atualizar ou deletar, recarrega o painel na hora
+                buscarVeiculos();
+            }
+        )
+        .subscribe();
 });
 
 // Mudar de campo ao apertar "Enter" sequencialmente
@@ -31,19 +46,20 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// Buscar dados guardados localmente
-function buscarVeiculos() {
-    const dadosSalvos = localStorage.getItem('oficina_veiculos');
-    if (dadosSalvos) {
-        veiculosLocais = JSON.parse(dadosSalvos);
-    } else {
-        veiculosLocais = [];
-    }
-    renderizarPainel();
-}
+// 🟢 Buscar dados do BANCO DE DADOS (Supabase)
+async function buscarVeiculos() {
+    try {
+        const { data, error } = await _supabase
+            .from('veiculos')
+            .select('*');
 
-function salvarNoLocalStorage() {
-    localStorage.setItem('oficina_veiculos', JSON.stringify(veiculosLocais));
+        if (error) throw error;
+
+        veiculosLocais = data || [];
+        renderizarPainel();
+    } catch (err) {
+        console.error("Erro ao buscar veículos:", err.message);
+    }
 }
 
 // Renderizar Cards na Tela
@@ -96,17 +112,24 @@ function drag(ev, id) {
     ev.dataTransfer.setData("text/plain", id); 
 }
 
-function drop(ev, novoStatus) {
+// 🟢 Atualizar o status ao arrastar o card (Salva direto no Supabase)
+async function drop(ev, novoStatus) {
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
     
     if (!id) return;
 
-    const veiculo = veiculosLocais.find(v => v.id === id);
-    if (veiculo) {
-        veiculo.status = novoStatus;
-        salvarNoLocalStorage();
-        renderizarPainel();
+    try {
+        const { error } = await _supabase
+            .from('veiculos')
+            .update({ status: novoStatus })
+            .eq('id', id);
+
+        if (error) throw error;
+        
+        // O Realtime atualizará as telas de todo mundo automaticamente!
+    } catch (err) {
+        console.error("Erro ao mover veículo:", err.message);
     }
 }
 
@@ -124,7 +147,8 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-function salvarVeiculo() {
+// 🟢 Salvar ou Editar Veículo no Supabase
+async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     
     const dados = {
@@ -142,20 +166,30 @@ function salvarVeiculo() {
         return;
     }
 
-    if (id) {
-        const index = veiculosLocais.findIndex(item => item.id === id);
-        if (index !== -1) {
-            dados.id = id;
-            veiculosLocais[index] = dados;
+    try {
+        if (id) {
+            // Atualizar registro existente
+            const { error } = await _supabase
+                .from('veiculos')
+                .update(dados)
+                .eq('id', id);
+
+            if (error) throw error;
+        } else {
+            // Criar novo registro
+            dados.id = 'id_' + Math.random().toString(36).substr(2, 9);
+            const { error } = await _supabase
+                .from('veiculos')
+                .insert([dados]);
+
+            if (error) throw error;
         }
-    } else {
-        dados.id = 'id_' + Math.random().toString(36).substr(2, 9);
-        veiculosLocais.push(dados);
+
+        limparFormulario();
+    } catch (err) {
+        alert("Erro ao salvar veículo no banco de dados.");
+        console.error(err.message);
     }
-    
-    salvarNoLocalStorage();
-    limparFormulario();
-    buscarVeiculos();
 }
 
 function carregarParaEdicao(id) {
@@ -177,14 +211,23 @@ function carregarParaEdicao(id) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function excluirVeiculo(id) {
+// 🟢 Excluir Veículo do Supabase
+async function excluirVeiculo(id) {
     const v = veiculosLocais.find(item => item.id === id);
     if (!v) return;
 
     if (confirm(`Tem certeza que deseja excluir o veículo de ${v.cliente} (Placa: ${v.placa})?`)) {
-        veiculosLocais = veiculosLocais.filter(item => item.id !== id);
-        salvarNoLocalStorage();
-        buscarVeiculos();
+        try {
+            const { error } = await _supabase
+                .from('veiculos')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (err) {
+            alert("Erro ao excluir veículo.");
+            console.error(err.message);
+        }
     }
 }
 
