@@ -1,16 +1,47 @@
 let veiculosLocais = [];
+let drake = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('data_agendamento').value = hoje;
 
     configurarNavegacaoEnter();
+    inicializarDragAndDrop();
     await buscarVeiculos();
 
     if (typeof _supabase !== 'undefined' && _supabase.channel) {
         _supabase.channel('mudancas-veiculos').subscribe();
     }
 });
+
+// 🟢 CONFIGURA O DRAG & DROP PARA CELULAR E DESKTOP VIA DRAGULA
+function inicializarDragAndDrop() {
+    const containers = [
+        document.getElementById('container-AGENDADO'),
+        document.getElementById('container-ENTRADA'),
+        document.getElementById('container-EXECUÇÃO'),
+        document.getElementById('container-FINALIZADO'),
+        document.getElementById('container-RETIRADO')
+    ];
+
+    drake = dragula(containers, {
+        moves: function (el, container, handle) {
+            // Evita arrastar se clicar nos botões do card
+            return !handle.tagName.match(/BUTTON/i);
+        }
+    });
+
+    drake.on('drop', async (el, target, source) => {
+        if (!target || target === source) return;
+
+        const id = el.getAttribute('data-id');
+        const novoStatus = target.parentElement.getAttribute('data-status');
+
+        if (id && novoStatus) {
+            await atualizarStatusNoSupabase(id, novoStatus);
+        }
+    });
+}
 
 function configurarNavegacaoEnter() {
     const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
@@ -55,7 +86,7 @@ async function buscarVeiculos() {
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
-        const container = document.querySelector(`#col-${col} .cards-container`);
+        const container = document.getElementById(`container-${col}`);
         if (container) container.innerHTML = '';
     });
 
@@ -68,13 +99,11 @@ function renderizarPainel(filtroPlaca = '') {
             return;
         }
 
-        const container = document.querySelector(`#col-${v.status} .cards-container`);
+        const container = document.getElementById(`container-${v.status}`);
         if (container) {
             const card = document.createElement('div');
             card.className = 'card';
-            card.draggable = true;
-            card.id = `card-${v.id}`;
-            card.ondragstart = (e) => drag(e, v.id);
+            card.setAttribute('data-id', v.id);
             
             card.innerHTML = `
                 <h4>${v.cliente}</h4>
@@ -83,21 +112,9 @@ function renderizarPainel(filtroPlaca = '') {
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
 
-                <!-- Seletor Rápido de Mover Status (Ideal para Celular) -->
-                <div class="move-select-container">
-                    <label>Mover para:</label>
-                    <select onchange="moverStatusPorSelect('${v.id}', this.value)">
-                        <option value="AGENDADO" ${v.status === 'AGENDADO' ? 'selected' : ''}>📅 AGENDADO</option>
-                        <option value="ENTRADA" ${v.status === 'ENTRADA' ? 'selected' : ''}>🚗 ENTRADA</option>
-                        <option value="EXECUÇÃO" ${v.status === 'EXECUÇÃO' ? 'selected' : ''}>🛠️ EXECUÇÃO</option>
-                        <option value="FINALIZADO" ${v.status === 'FINALIZADO' ? 'selected' : ''}>✅ FINALIZADO</option>
-                        <option value="RETIRADO" ${v.status === 'RETIRADO' ? 'selected' : ''}>🏁 RETIRADO</option>
-                    </select>
-                </div>
-
                 <div class="card-actions">
                     <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">✏️ Editar</button>
-                    <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Notificar</button>
+                    <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Whats</button>
                     <button style="background: #e74c3c;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
                 </div>
             `;
@@ -106,30 +123,7 @@ function renderizarPainel(filtroPlaca = '') {
     });
 }
 
-// 🟢 FUNÇÃO DRAG & DROP CORRIGIDA PARA DESKTOP
-function allowDrop(ev) { 
-    ev.preventDefault(); 
-}
-
-function drag(ev, id) { 
-    ev.dataTransfer.setData("text/plain", id); 
-}
-
-async function drop(ev, novoStatus) {
-    ev.preventDefault();
-    const id = ev.dataTransfer.getData("text/plain");
-    
-    if (!id) return;
-
-    await atualizarStatusNoSupabase(id, novoStatus);
-}
-
-// 🟢 MOVER STATUS VIA SELECT (MUITO MAIS FÁCIL NO CELULAR)
-async function moverStatusPorSelect(id, novoStatus) {
-    await atualizarStatusNoSupabase(id, novoStatus);
-}
-
-// Função auxiliar central de atualização
+// Atualizar status no Supabase
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
@@ -139,9 +133,12 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
 
         if (error) throw error;
 
-        await buscarVeiculos();
+        // Atualiza na memória local
+        const v = veiculosLocais.find(item => item.id === id);
+        if (v) v.status = novoStatus;
     } catch (err) {
         console.error("Erro ao mover veículo:", err);
+        await buscarVeiculos(); // Recarrega se der erro
     }
 }
 
