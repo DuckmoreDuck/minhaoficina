@@ -3,91 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel da Oficina</title>
-    <!-- Incluindo o SDK do Supabase -->
-    <script src="supabase.js"></script>
+    <title>Painel de Veículos - Oficina</title>
     <style>
-        :root {
-            --bg-color: #f4f6f9;
-            --card-color: #ffffff;
-            --border-color: #e0e0e0;
-            --text-color: #333;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: var(--text-color); }
-        h1 { text-align: center; color: #2c3e50; }
-        .form-container { background: var(--card-color); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; }
-        .form-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; }
-        button { background: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-        button:hover { background: #219150; }
-        .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; align-items: start; overflow-x: auto; }
-        .column { background: #ebedf0; border-radius: 8px; padding: 10px; min-height: 500px; }
-        .column h3 { text-align: center; margin-top: 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
-        .card { background: var(--card-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: grab; border-left: 5px solid #3498db; position: relative; }
-        .card:active { cursor: grabbing; }
-        .card h4 { margin: 0 0 5px 0; color: #2c3e50; }
-        .card p { margin: 3px 0; font-size: 13px; color: #555; }
-        .card .actions { display: flex; gap: 5px; margin-top: 10px; }
-        .btn-edit { background: #3498db; padding: 5px; font-size: 11px; }
-        .btn-whatsapp { background: #25D366; padding: 5px; font-size: 11px; }
-        .btn-whatsapp:hover { background: #128C7E; }
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 20px; }
+        h1 { color: #333; }
+        
+        input[type="text"], textarea { text-transform: uppercase; }
+
+        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .form-actions { display: flex; gap: 10px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+
+        .search-container { margin-bottom: 20px; }
+        .search-container input { width: 100%; max-width: 350px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+        .kanban { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .column { background: #ebedf0; border-radius: 6px; padding: 15px; min-height: 400px; }
+        .column h3 { margin-top: 0; font-size: 16px; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px; }
+        .cards-container { min-height: 300px; }
+
+        .card { background: white; border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); cursor: grab; }
+        .card h4 { margin: 0 0 8px 0; color: #2c3e50; text-transform: uppercase; }
+        .card p { margin: 4px 0; font-size: 13px; color: #555; }
+        .card p strong { color: #333; }
+        .card-actions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+        .card-actions button { padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>📋 Painel de Controle - Oficina</h1>
+    <h1>📋 Painel de Controle da Oficina</h1>
 
-    <!-- Formulário para Cadastrar / Editar -->
+    <!-- FORMULÁRIO -->
     <div class="form-container">
-        <h3 id="form-title">Cadastrar Novo Veículo</h3>
-        <input type="hidden" id="veiculo-id">
-        <div class="form-group">
-            <input type="text" id="cliente" placeholder="Nome do Cliente" required>
-            <input type="text" id="telefone" placeholder="WhatsApp (Ex: 5511999999999)" required>
-        </div>
-        <div class="form-group">
-            <input type="text" id="placa" placeholder="Placa do Veículo" required>
-            <input type="text" id="mecanico" placeholder="Nome do Mecânico">
-        </div>
-        <div class="form-group">
-            <input type="date" id="data_agendamento">
-            <select id="status">
-                <option value="AGENDADO">AGENDADO</option>
-                <option value="ENTRADA">ENTRADA</option>
-                <option value="EXECUÇÃO">EXECUÇÃO</option>
-                <option value="FINALIZADO">FINALIZADO</option>
-                <option value="RETIRADO">RETIRADO</option>
-            </select>
-        </div>
-        <textarea id="observacoes" placeholder="Observações..." rows="3"></textarea>
-        <button id="btn-salvar" onclick="salvarVeiculo()">Adicionar Veículo</button>
-        <button id="btn-cancelar" style="background:#e74c3c; margin-top:5px; display:none;" onclick="limparFormulario()">Cancelar Edição</button>
+        <h2 id="form-title">Cadastrar Novo Veículo</h2>
+        <form id="form-veiculo">
+            <input type="hidden" id="veiculo-id">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="placa">Placa *</label>
+                    <input type="text" id="placa" placeholder="EX: ABC1D23" required onblur="buscarPorPlaca(this.value)">
+                </div>
+                <div class="form-group">
+                    <label for="cliente">Cliente *</label>
+                    <input type="text" id="cliente" placeholder="NOME DO CLIENTE" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefone">Telefone *</label>
+                    <input type="text" id="telefone" placeholder="(11) 99999-9999" required>
+                </div>
+                <div class="form-group">
+                    <label for="mecanico">Mecânico</label>
+                    <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO">
+                </div>
+                <div class="form-group">
+                    <label for="data_agendamento">Data de Agendamento</label>
+                    <input type="date" id="data_agendamento">
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="AGENDADO">AGENDADO</option>
+                        <option value="ENTRADA">ENTRADA</option>
+                        <option value="EXECUÇÃO">EXECUÇÃO</option>
+                        <option value="FINALIZADO">FINALIZADO</option>
+                        <option value="RETIRADO">RETIRADO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="observacoes">Observações</label>
+                <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO OU SERVIÇO"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="btn-salvar" class="btn btn-success" onclick="salvarVeiculo()">Adicionar Veículo</button>
+                <button type="button" id="btn-cancelar" class="btn btn-secondary" onclick="limparFormulario()" style="display: none;">Cancelar</button>
+            </div>
+        </form>
     </div>
 
-    <!-- Kanban Board -->
-    <div class="board">
-        <div class="column" id="col-AGENDADO" ondragover="allowDrop(event)" ondrop="drop(event, 'AGENDADO')">
-            <h3>Agendado</h3>
+    <!-- BUSCA / FILTRO DE PLACA -->
+    <div class="search-container">
+        <input type="text" id="busca-placa" placeholder="🔍 Pesquisar veículo por placa..." oninput="renderizarPainel(this.value)">
+    </div>
+
+    <!-- PAINEL KANBAN -->
+    <div class="kanban">
+        <div class="column" id="col-AGENDADO" ondrop="drop(event, 'AGENDADO')" ondragover="allowDrop(event)">
+            <h3>📅 AGENDADO</h3>
             <div class="cards-container"></div>
         </div>
-        <div class="column" id="col-ENTRADA" ondragover="allowDrop(event)" ondrop="drop(event, 'ENTRADA')">
-            <h3>Entrada</h3>
+        <div class="column" id="col-ENTRADA" ondrop="drop(event, 'ENTRADA')" ondragover="allowDrop(event)">
+            <h3>🚗 ENTRADA</h3>
             <div class="cards-container"></div>
         </div>
-        <div class="column" id="col-EXECUÇÃO" ondragover="allowDrop(event)" ondrop="drop(event, 'EXECUÇÃO')">
-            <h3>Execução</h3>
+        <div class="column" id="col-EXECUÇÃO" ondrop="drop(event, 'EXECUÇÃO')" ondragover="allowDrop(event)">
+            <h3>🛠️ EXECUÇÃO</h3>
             <div class="cards-container"></div>
         </div>
-        <div class="column" id="col-FINALIZADO" ondragover="allowDrop(event)" ondrop="drop(event, 'FINALIZADO')">
-            <h3>Finalizado</h3>
+        <div class="column" id="col-FINALIZADO" ondrop="drop(event, 'FINALIZADO')" ondragover="allowDrop(event)">
+            <h3>✅ FINALIZADO</h3>
             <div class="cards-container"></div>
         </div>
-        <div class="column" id="col-RETIRADO" ondragover="allowDrop(event)" ondrop="drop(event, 'RETIRADO')">
-            <h3>Retirado</h3>
+        <div class="column" id="col-RETIRADO" ondrop="drop(event, 'RETIRADO')" ondragover="allowDrop(event)">
+            <h3>🏁 RETIRADO</h3>
             <div class="cards-container"></div>
         </div>
     </div>
 
+    <!-- SCRIPTS -->
+    <script src="supabase.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
