@@ -2,24 +2,19 @@ let veiculosLocais = [];
 
 // Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", async () => {
-    document.getElementById('data_agendamento').valueAsDate = new Date();
+    // Define a data atual como padrão no formulário
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('data_agendamento').value = hoje;
+
     configurarNavegacaoEnter();
     
     // 1. Busca os veículos do Supabase na primeira carga
     await buscarVeiculos();
 
-    // 2. 🟢 ATIVA O REALTIME: Escuta alterações feitas por QUALQUER usuário em tempo real
-    _supabase
-        .channel('mudancas-veiculos')
-        .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'veiculos' },
-            (payload) => {
-                // Sempre que alguém inserir, atualizar ou deletar, recarrega o painel na hora
-                buscarVeiculos();
-            }
-        )
-        .subscribe();
+    // 2. Escuta alterações em tempo real / Polling configurado no supabase.js
+    if (typeof _supabase !== 'undefined' && _supabase.channel) {
+        _supabase.channel('mudancas-veiculos').subscribe();
+    }
 });
 
 // Mudar de campo ao apertar "Enter" sequencialmente
@@ -46,7 +41,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 Buscar dados do BANCO DE DADOS (Supabase)
+// 🟢 Buscar dados do Supabase
 async function buscarVeiculos() {
     try {
         const { data, error } = await _supabase
@@ -58,7 +53,7 @@ async function buscarVeiculos() {
         veiculosLocais = data || [];
         renderizarPainel();
     } catch (err) {
-        console.error("Erro ao buscar veículos:", err.message);
+        console.error("Erro ao buscar veículos:", err);
     }
 }
 
@@ -91,7 +86,7 @@ function renderizarPainel(filtroPlaca = '') {
                 <h4>${v.cliente}</h4>
                 <p><strong>Placa:</strong> ${v.placa}</p>
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
-                <p><strong>Data:</strong> ${v.data_agendamento}</p>
+                <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
                 <div class="card-actions">
                     <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">Editar</button>
@@ -112,7 +107,7 @@ function drag(ev, id) {
     ev.dataTransfer.setData("text/plain", id); 
 }
 
-// 🟢 Atualizar o status ao arrastar o card (Salva direto no Supabase)
+// 🟢 Atualizar o status ao arrastar o card (Salva no Supabase)
 async function drop(ev, novoStatus) {
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
@@ -126,10 +121,10 @@ async function drop(ev, novoStatus) {
             .eq('id', id);
 
         if (error) throw error;
-        
-        // O Realtime atualizará as telas de todo mundo automaticamente!
+
+        await buscarVeiculos();
     } catch (err) {
-        console.error("Erro ao mover veículo:", err.message);
+        console.error("Erro ao mover veículo:", err);
     }
 }
 
@@ -147,16 +142,17 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-// 🟢 Salvar ou Editar Veículo no Supabase
+// 🟢 Salvar ou Editar Veículo no Supabase (Suporte a UUID automático)
 async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
+    const dataCampo = document.getElementById('data_agendamento').value;
     
     const dados = {
         cliente: document.getElementById('cliente').value.trim().toUpperCase(),
         telefone: document.getElementById('telefone').value.trim(),
         placa: document.getElementById('placa').value.trim().toUpperCase(),
         mecanico: document.getElementById('mecanico').value.trim().toUpperCase(),
-        data_agendamento: document.getElementById('data_agendamento').value,
+        data_agendamento: dataCampo ? dataCampo : null,
         status: document.getElementById('status').value,
         observacoes: document.getElementById('observacoes').value.trim().toUpperCase()
     };
@@ -176,8 +172,7 @@ async function salvarVeiculo() {
 
             if (error) throw error;
         } else {
-            // Criar novo registro
-            dados.id = 'id_' + Math.random().toString(36).substr(2, 9);
+            // Novo cadastro: Não passa 'id' para deixar o Supabase gerar o UUID gen_random_uuid()
             const { error } = await _supabase
                 .from('veiculos')
                 .insert([dados]);
@@ -186,9 +181,10 @@ async function salvarVeiculo() {
         }
 
         limparFormulario();
+        await buscarVeiculos();
     } catch (err) {
         alert("Erro ao salvar veículo no banco de dados.");
-        console.error(err.message);
+        console.error("Erro detalhado:", err);
     }
 }
 
@@ -201,7 +197,7 @@ function carregarParaEdicao(id) {
     document.getElementById('telefone').value = v.telefone || '';
     document.getElementById('placa').value = v.placa;
     document.getElementById('mecanico').value = v.mecanico || '';
-    document.getElementById('data_agendamento').value = v.data_agendamento;
+    document.getElementById('data_agendamento').value = v.data_agendamento || '';
     document.getElementById('status').value = v.status;
     document.getElementById('observacoes').value = v.observacoes || '';
 
@@ -224,9 +220,11 @@ async function excluirVeiculo(id) {
                 .eq('id', id);
 
             if (error) throw error;
+
+            await buscarVeiculos();
         } catch (err) {
             alert("Erro ao excluir veículo.");
-            console.error(err.message);
+            console.error("Erro detalhado:", err);
         }
     }
 }
@@ -237,7 +235,10 @@ function limparFormulario() {
     document.getElementById('telefone').value = '';
     document.getElementById('placa').value = '';
     document.getElementById('mecanico').value = '';
-    document.getElementById('data_agendamento').valueAsDate = new Date();
+    
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('data_agendamento').value = hoje;
+    
     document.getElementById('status').value = 'AGENDADO';
     document.getElementById('observacoes').value = '';
 
