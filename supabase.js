@@ -86,7 +86,7 @@
 
 // 🟢 CONFIGURAÇÃO E INICIALIZAÇÃO DA SUA CONTA SUPABASE
 // (Substitua pelos dados reais do seu painel do Supabase)
-const SUPABASE_URL = 'https://bwrbduzlcbfbsrrnowam.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://bwrbduzlcbfbsrrnowam.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw';
 
 // Variável global usada no app.js
