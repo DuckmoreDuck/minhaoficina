@@ -2,39 +2,61 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Painel de Veículos - Oficina</title>
     <style>
-        * { box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background-color: #f4f6f9; margin: 0; padding: 20px; }
-        h1 { color: #333; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 15px; }
+        h1 { color: #2c3e50; font-size: 22px; margin-top: 5px; text-align: center; }
         
         input[type="text"], textarea { text-transform: uppercase; }
 
-        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        .form-actions { display: flex; gap: 10px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3498db; }
+        
+        .form-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center; }
         .btn-success { background: #27ae60; color: white; }
         .btn-secondary { background: #95a5a6; color: white; }
 
         .search-container { margin-bottom: 20px; }
-        .search-container input { width: 100%; max-width: 350px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .search-container input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
 
-        .kanban { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
-        .column { background: #ebedf0; border-radius: 6px; padding: 15px; min-height: 400px; }
-        .column h3 { margin-top: 0; font-size: 16px; color: #2c3e50; border-bottom: 2px solid #bdc3c7; padding-bottom: 10px; }
-        .cards-container { min-height: 300px; }
+        /* KANBAN LAYOUT RESPONSIVO */
+        .kanban { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .column { background: #ebedf0; border-radius: 10px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
+        .column h3 { margin: 0 0 12px 0; font-size: 15px; color: #2c3e50; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; text-align: center; }
+        .cards-container { flex: 1; min-height: 100px; }
 
-        .card { background: white; border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); cursor: grab; }
-        .card h4 { margin: 0 0 8px 0; color: #2c3e50; text-transform: uppercase; }
-        .card p { margin: 4px 0; font-size: 13px; color: #555; }
-        .card p strong { color: #333; }
-        .card-actions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
-        .card-actions button { padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; color: white; font-weight: bold; }
+        /* CARDS */
+        .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); cursor: grab; transition: transform 0.1s ease; }
+        .card:active { cursor: grabbing; transform: scale(0.98); }
+        .card h4 { margin: 0 0 6px 0; color: #2c3e50; font-size: 16px; text-transform: uppercase; }
+        .card p { margin: 3px 0; font-size: 13px; color: #555; }
+        .card p strong { color: #2c3e50; }
+        
+        /* BOTÃO MOVER EM CELULAR */
+        .move-select-container { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee; display: flex; align-items: center; gap: 5px; }
+        .move-select-container label { font-size: 11px; font-weight: bold; color: #7f8c8d; }
+        .move-select-container select { font-size: 12px; padding: 4px; border-radius: 4px; border: 1px solid #ddd; background: #f8f9fa; flex: 1; }
+
+        /* AÇÕES DO CARD */
+        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+        .card-actions button { padding: 8px 4px; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: white; font-weight: bold; text-align: center; }
+
+        /* OTIMIZAÇÃO PARA TELAS DE CELULAR (< 600px) */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            h1 { font-size: 18px; }
+            .kanban { display: flex; flex-direction: column; gap: 15px; }
+            .column { min-height: auto; }
+            .card-actions { grid-template-columns: 1fr; } /* Botões em pilha no celular para fácil toque */
+            .card-actions button { padding: 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -43,7 +65,7 @@
 
     <!-- FORMULÁRIO -->
     <div class="form-container">
-        <h2 id="form-title">Cadastrar Novo Veículo</h2>
+        <h2 id="form-title" style="font-size: 16px; margin-top:0;">Cadastrar Novo Veículo</h2>
         <form id="form-veiculo">
             <input type="hidden" id="veiculo-id">
             
@@ -58,7 +80,7 @@
                 </div>
                 <div class="form-group">
                     <label for="telefone">Telefone *</label>
-                    <input type="text" id="telefone" placeholder="(11) 99999-9999" required>
+                    <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
                 </div>
                 <div class="form-group">
                     <label for="mecanico">Mecânico</label>
@@ -92,12 +114,12 @@
         </form>
     </div>
 
-    <!-- BUSCA / FILTRO DE PLACA -->
+    <!-- BUSCA DE PLACA -->
     <div class="search-container">
-        <input type="text" id="busca-placa" placeholder="🔍 Pesquisar veículo por placa..." oninput="renderizarPainel(this.value)">
+        <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa..." oninput="renderizarPainel(this.value)">
     </div>
 
-    <!-- PAINEL KANBAN -->
+    <!-- KANBAN -->
     <div class="kanban">
         <div class="column" id="col-AGENDADO" ondrop="drop(event, 'AGENDADO')" ondragover="allowDrop(event)">
             <h3>📅 AGENDADO</h3>
