@@ -8,12 +8,16 @@
 })(this, (function (exports) { 'use strict';
 
     const createClient = (supabaseUrl, supabaseKey, options = {}) => {
+        // Limpa a URL se vier com barra no final ou /rest/v1 duplicado
+        const baseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+        
         const headers = {
             'apikey': supabaseKey,
             'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json'
         };
-        const buildUrl = (table, query = '') => `${supabaseUrl}/rest/v1/${table}${query}`;
+
+        const buildUrl = (table, query = '') => `${baseUrl}/rest/v1/${table}${query}`;
         
         return {
             from: (table) => ({
@@ -25,6 +29,7 @@
                         return { data, error: res.ok ? null : data };
                     } catch (err) { return { data: null, error: err }; }
                 },
+                
                 // ➕ INSERT
                 insert: async (values) => {
                     try {
@@ -37,8 +42,9 @@
                         return { data, error: res.ok ? null : data };
                     } catch (err) { return { data: null, error: err }; }
                 },
-                // ✏️ UPDATE
-                update: async (values) => {
+                
+                // ✏️ UPDATE (Corrigido para encadear com .eq)
+                update: (values) => {
                     return {
                         eq: async (column, value) => {
                             try {
@@ -47,13 +53,14 @@
                                     headers: { ...headers, 'Prefer': 'return=representation' },
                                     body: JSON.stringify(values)
                                 });
-                                const data = await res.json();
+                                const data = res.status !== 204 ? await res.json() : [];
                                 return { data, error: res.ok ? null : data };
                             } catch (err) { return { data: null, error: err }; }
                         }
                     };
                 },
-                // 🗑️ DELETE (Adicionado)
+                
+                // 🗑️ DELETE (Corrigido para encadear com .eq)
                 delete: () => {
                     return {
                         eq: async (column, value) => {
@@ -68,7 +75,8 @@
                     };
                 }
             }),
-            // 🔄 ATUALIZAÇÃO AUTOMÁTICA EM TEMPO REAL (Polling a cada 5s)
+            
+            // 🔄 ATUALIZAÇÃO AUTOMÁTICA EM TEMPO REAL (Polling 5s)
             channel: () => ({
                 on: function() { return this; },
                 subscribe: function() { 
@@ -80,14 +88,13 @@
             })
         };
     };
+
     exports.createClient = createClient;
     Object.defineProperty(exports, '__esModule', { value: true });
 }));
 
 // 🟢 CONFIGURAÇÃO E INICIALIZAÇÃO DA SUA CONTA SUPABASE
-// (Substitua pelos dados reais do seu painel do Supabase)
 const SUPABASE_URL = 'https://bwrbduzlcbfbsrrnowam.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3cmJkdXpsY2JmYnNycm5vd2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NjYwMDgsImV4cCI6MjEwMTM0MjAwOH0.APLWUjOFPUFoqZ-_DMfjpFlo0xCw2W_drBjA_8EDrQw';
+const SUPABASE_KEY = 'SUA_CHAVE_ANON_AQUI'; // Lembre de colocar sua chave pública anon aqui
 
-// Variável global usada no app.js
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
