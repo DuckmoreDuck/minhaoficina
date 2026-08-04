@@ -8,9 +8,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     configurarNavegacaoEnter();
     await buscarVeiculos();
 
-    if (typeof _supabase !== 'undefined' && _supabase.channel) {
-        _supabase.channel('mudancas-veiculos').subscribe();
-    }
+    // Atualização em tempo real a cada 5 segundos
+    setInterval(buscarVeiculos, 5000);
 });
 
 function configurarNavegacaoEnter() {
@@ -36,7 +35,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 FUNÇÕES DRAG & DROP NATIVAS (COMPATÍVEIS COM TODOS OS NAVEGADORES)
+// 🟢 FUNÇÕES DRAG & DROP NATIVAS (DESKTOP E SUPORTE TOUCH)
 function dragStart(ev, id) {
     cardSendoArrastadoId = id;
     ev.dataTransfer.setData("text/plain", id);
@@ -89,7 +88,7 @@ async function buscarVeiculos() {
     }
 }
 
-// RENDERIZAR CARDS
+// 🟢 RENDERIZAR CARDS
 function renderizarPainel(filtroPlaca = '') {
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     colunas.forEach(col => {
@@ -120,7 +119,7 @@ function renderizarPainel(filtroPlaca = '') {
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
 
-                <!-- MOVER RÁPIDO (EXCELENTE PARA TOUCH/CELULAR) -->
+                <!-- MOVER RÁPIDO NO PRÓPRIO CARD -->
                 <div class="fast-move">
                     <span style="font-size: 11px; font-weight: bold; color: #666;">Status:</span>
                     <select onchange="atualizarStatusNoSupabase('${v.id}', this.value)">
@@ -139,7 +138,7 @@ function renderizarPainel(filtroPlaca = '') {
                 </div>
             `;
 
-            // Adiciona suporte a toque no celular
+            // Adiciona suporte para arrastar com o dedo em aparelhos celulares
             adicionarSuporteTouch(card, v.id);
 
             container.appendChild(card);
@@ -147,13 +146,10 @@ function renderizarPainel(filtroPlaca = '') {
     });
 }
 
-// 🟢 SUPORTE A TOUCH (ARRASTAR NO CELULAR SEM DEPENDÊNCIA EXTERNA)
+// 🟢 SUPORTE A TOUCH (CELULAR)
 function adicionarSuporteTouch(card, id) {
-    let originalContainer = null;
-
     card.addEventListener('touchstart', (e) => {
         cardSendoArrastadoId = id;
-        originalContainer = card.parentElement;
     }, { passive: true });
 
     card.addEventListener('touchend', (e) => {
@@ -172,19 +168,27 @@ function adicionarSuporteTouch(card, id) {
     }, { passive: true });
 }
 
-// 🟢 ATUALIZAR STATUS NO SUPABASE
+// 🟢 ATUALIZAR STATUS NO SUPABASE (CORRIGIDO)
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
             .from('veiculos')
             .update({ status: novoStatus })
-            .eq('id', id);
+            .eq('id', id)
+            .select();
 
-        if (error) throw error;
+        if (error) {
+            console.error("Erro no Supabase:", error);
+            alert("Erro ao atualizar o status no banco de dados.");
+            return;
+        }
 
-        await buscarVeiculos();
+        const v = veiculosLocais.find(item => item.id === id);
+        if (v) v.status = novoStatus;
+
+        renderizarPainel();
     } catch (err) {
-        console.error("Erro ao mover veículo:", err);
+        console.error("Erro inesperado ao mover veículo:", err);
     }
 }
 
