@@ -114,6 +114,24 @@ function getHojeLocal() {
     return `${ano}-${mes}-${dia}`;
 }
 
+// Função auxiliar para validar se um veículo RETIRADO deve aparecer na coluna do dia
+function deveExibirRetirado(updatedAt) {
+    if (!updatedAt) return true;
+
+    const agora = new Date();
+    const dataAtualizacao = new Date(updatedAt);
+
+    // Verifica se foi alterado para RETIRADO no dia de hoje
+    const ehHoje = agora.toDateString() === dataAtualizacao.toDateString();
+
+    // Se já passou das 18h00 do dia, limpa da coluna
+    if (agora.getHours() >= 18) {
+        return false;
+    }
+
+    return ehHoje;
+}
+
 function inscreverRealtimeSupabase() {
     _supabase
         .channel('mudancas-veiculos')
@@ -217,12 +235,17 @@ function renderizarPainel(filtroPlaca = null) {
     veiculosLocais.forEach(v => {
         const placaStr = (v.placa || '').toLowerCase();
 
+        // Se houver texto no campo de busca por placa, aplica o filtro de texto
         if (filtro && !placaStr.includes(filtro)) {
             return;
         }
 
+        // Lógica da coluna RETIRADO:
+        // Se NÃO HOUVER busca por placa ativa, oculta os retirados de dias anteriores ou após as 18h
         if (v.status === 'RETIRADO' && !filtro) {
-            return;
+            if (!deveExibirRetirado(v.updated_at)) {
+                return;
+            }
         }
 
         if (contadores[v.status] !== undefined) {
@@ -303,13 +326,19 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
             .from('veiculos')
-            .update({ status: novoStatus })
+            .update({ 
+                status: novoStatus,
+                updated_at: new Date().toISOString() // Atualiza o timestamp para a regra das 18h funcionar com precisão
+            })
             .eq('id', id);
 
         if (error) throw error;
 
         const v = veiculosLocais.find(item => item.id === id);
-        if (v) v.status = novoStatus;
+        if (v) {
+            v.status = novoStatus;
+            v.updated_at = new Date().toISOString();
+        }
 
         renderizarPainel();
     } catch (err) {
@@ -343,7 +372,8 @@ async function salvarVeiculo() {
         mecanico: document.getElementById('mecanico').value.trim().toUpperCase(),
         data_agendamento: dataCampo ? dataCampo : null,
         status: document.getElementById('status').value,
-        observacoes: document.getElementById('observacoes').value.trim().toUpperCase()
+        observacoes: document.getElementById('observacoes').value.trim().toUpperCase(),
+        updated_at: new Date().toISOString()
     };
 
     if (!dados.cliente || !dados.placa || !dados.telefone) {
