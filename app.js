@@ -1,5 +1,6 @@
 let veiculosLocais = [];
 let cardSendoArrastadoId = null;
+let realtimeChannel = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const formLogin = document.getElementById('form-login');
@@ -73,6 +74,10 @@ async function fazerLogin() {
 }
 
 async function fazerLogout() {
+    if (realtimeChannel) {
+        _supabase.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+    }
     await _supabase.auth.signOut();
     window.location.reload();
 }
@@ -127,7 +132,10 @@ function deveExibirRetirado(updatedAt) {
 }
 
 function inscreverRealtimeSupabase() {
-    _supabase
+    // Evita duplicar ou assinar um canal que já foi ativado
+    if (realtimeChannel) return;
+
+    realtimeChannel = _supabase
         .channel('mudancas-veiculos')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
             buscarVeiculos();
