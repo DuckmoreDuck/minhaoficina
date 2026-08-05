@@ -271,26 +271,26 @@ function renderizarPainel(filtroDigitado = null) {
             card.draggable = true;
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
 
-            const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
-            const dataHtml = v.data_agendamento ? `<div class="card-data-topo">📅 ${v.data_agendamento}</div>` : '';
+            const osOrHtml = v.os_or ? `<span class="card-os" style="font-weight:bold; font-size:12px;">OS/OR: ${v.os_or}</span>` : '';
+            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-top:2px;">📅 ${v.data_agendamento}</div>` : '';
             
             card.innerHTML = `
-                <div class="card-header">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
                     <div>
-                        <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
+                        <h4 class="card-cliente" style="margin:0;">${v.cliente || 'CLIENTE SEM NOME'}</h4>
                     </div>
-                    <div class="card-header-direita">
+                    <div style="text-align:right;">
                         ${osOrHtml}
                         ${dataHtml}
                     </div>
                 </div>
                 <div>
-                    <span class="card-placa">🚘 ${v.placa || '-'}</span>
+                    <span class="card-placa" style="font-size: 1.35rem; font-weight: bold; color: #1a252f; display: block; margin: 4px 0 8px 0;">🚘 ${v.placa || '-'}</span>
                 </div>
-                <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
-                <p><em>${v.observacoes || ''}</em></p>
+                <p style="margin: 4px 0;"><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
+                <p style="margin: 4px 0;"><em>${v.observacoes || ''}</em></p>
 
-                <div class="fast-move">
+                <div class="fast-move" style="margin-top: 8px;">
                     <span style="font-size: 10px; font-weight: bold; color: #666;">Status:</span>
                     <select onchange="atualizarStatusNoSupabase('${v.id}', this.value)">
                         <option value="AGENDADO" ${v.status === 'AGENDADO' ? 'selected' : ''}>AGENDADO</option>
@@ -301,7 +301,7 @@ function renderizarPainel(filtroDigitado = null) {
                     </select>
                 </div>
 
-                <div class="card-actions">
+                <div class="card-actions" style="margin-top: 8px;">
                     <button style="background: #3498db;" onclick="carregarParaEdicao('${v.id}')">✏️ Editar</button>
                     <button style="background: #25D366;" onclick="notificarWhatsApp('${v.id}')">📱 Whats</button>
                     <button style="background: #e74c3c;" onclick="excluirVeiculo('${v.id}')">🗑️ Excluir</button>
