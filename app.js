@@ -285,6 +285,7 @@ function renderizarPainel(filtroDigitado = null) {
             // 🏷️ Construção das Tags no Card
             let tagsHtml = tipoVeiculoHtml;
             if (v.chk_orcamento_pendente) tagsHtml += `<span style="background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Aguard. Orçamento</span>`;
+            if (v.chk_aguardando_aprovacao) tagsHtml += `<span style="background:#fef3c7; color:#d97706; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Ag. Aprovação</span>`;
             if (v.chk_orcamento_aprovado) tagsHtml += `<span style="background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">✅ Orç. Aprovado</span>`;
             
             if (v.chk_aguardando_pecas) {
@@ -437,7 +438,6 @@ async function buscarPorPlaca(placaDigitada) {
         document.getElementById('telefone').value = veiculoEncontrado.telefone || '';
         document.getElementById('placa').value = veiculoEncontrado.placa || '';
         
-        // Puxa o tipo de veículo se já estiver cadastrado anteriormente
         if (document.getElementById('tipo_veiculo') && veiculoEncontrado.tipo_veiculo) {
             document.getElementById('tipo_veiculo').value = veiculoEncontrado.tipo_veiculo;
         }
@@ -465,6 +465,7 @@ async function salvarVeiculo() {
         
         // 📋 Caixas de marcação e extras de peças/orçamento
         chk_orcamento_pendente: document.getElementById('chk_orcamento_pendente')?.checked || false,
+        chk_aguardando_aprovacao: document.getElementById('chk_aguardando_aprovacao')?.checked || false,
         chk_orcamento_aprovado: document.getElementById('chk_orcamento_aprovado')?.checked || false,
         chk_aguardando_pecas: document.getElementById('chk_aguardando_pecas')?.checked || false,
         fornecedor: document.getElementById('fornecedor')?.value.trim().toUpperCase() || '',
@@ -520,6 +521,7 @@ function carregarParaEdicao(id) {
 
     // Carregar checkboxes e inputs extras
     if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = !!v.chk_orcamento_pendente;
+    if (document.getElementById('chk_aguardando_aprovacao')) document.getElementById('chk_aguardando_aprovacao').checked = !!v.chk_aguardando_aprovacao;
     if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = !!v.chk_orcamento_aprovado;
     if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = !!v.chk_aguardando_pecas;
     
@@ -568,6 +570,7 @@ function limparFormulario() {
 
     // Limpar Checkboxes e inputs extras
     if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = false;
+    if (document.getElementById('chk_aguardando_aprovacao')) document.getElementById('chk_aguardando_aprovacao').checked = false;
     if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = false;
     if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = false;
     
