@@ -2,15 +2,34 @@ let veiculosLocais = [];
 let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('data_agendamento').value = hoje;
+    // Correção do fuso horário na data inicial
+    document.getElementById('data_agendamento').value = getHojeLocal();
 
     configurarNavegacaoEnter();
     await buscarVeiculos();
 
-    // Atualização em tempo real a cada 5 segundos
-    setInterval(buscarVeiculos, 5000);
+    // Recomendado: Realtime do Supabase (em vez de setInterval)
+    inscreverRealtimeSupabase();
 });
+
+// Retorna YYYY-MM-DD no fuso local (evita bug das 21h do ISOString)
+function getHojeLocal() {
+    const d = new Date();
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+// 🟢 ESCUTAR MUDANÇAS EM TEMPO REAL (Sem precisar de setInterval repetitivo)
+function inscreverRealtimeSupabase() {
+    _supabase
+        .channel('mudancas-veiculos')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
+            buscarVeiculos();
+        })
+        .subscribe();
+}
 
 function configurarNavegacaoEnter() {
     const campos = Array.from(document.querySelectorAll('#form-veiculo input, #form-veiculo select, #form-veiculo textarea'));
@@ -35,7 +54,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 FUNÇÕES DRAG & DROP NATIVAS (DESKTOP E TOUCH)
+// 🟢 FUNÇÕES DRAG & DROP NATIVAS
 function dragStart(ev, id) {
     cardSendoArrastadoId = id;
     ev.dataTransfer.setData("text/plain", id);
@@ -64,7 +83,7 @@ async function drop(ev, novoStatus) {
 // 🟢 NAVEGAÇÃO DE ABAS NO CELULAR
 function focarColuna(status, btnElement) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btnElement.classList.add('active');
+    if (btnElement) btnElement.classList.add('active');
 
     const coluna = document.getElementById(`col-${status}`);
     if (coluna) {
@@ -98,16 +117,18 @@ function renderizarPainel(filtroPlaca = '') {
         if (container) container.innerHTML = '';
     });
 
+    const filtro = filtroPlaca.toLowerCase().trim();
+
     veiculosLocais.forEach(v => {
-        if (filtroPlaca && !v.placa.toLowerCase().includes(filtroPlaca.toLowerCase())) {
+        const placaStr = (v.placa || '').toLowerCase();
+
+        if (filtro && !placaStr.includes(filtro)) {
             return;
         }
 
-        // Alteração: Veículos retirados agora são exibidos se houver uma pesquisa ativa
-        if (v.status === 'RETIRADO' && filtroPlaca) {
-            // Exibir veículos retirados na pesquisa
-        } else if (v.status === 'RETIRADO') {
-            return; // Ocultar veículos retirados quando não houver pesquisa
+        // Ocultar veículos retirados a menos que haja busca por placa ativa
+        if (v.status === 'RETIRADO' && !filtro) {
+            return;
         }
 
         if (contadores[v.status] !== undefined) {
@@ -122,8 +143,8 @@ function renderizarPainel(filtroPlaca = '') {
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
             
             card.innerHTML = `
-                <h4>${v.cliente}</h4>
-                <p><strong>Placa:</strong> ${v.placa}</p>
+                <h4>${v.cliente || 'CLIENTE SEM NOME'}</h4>
+                <p><strong>Placa:</strong> ${v.placa || '-'}</p>
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
@@ -152,17 +173,22 @@ function renderizarPainel(filtroPlaca = '') {
         }
     });
 
-    // Atualiza os títulos com as contagens
-    document.querySelector('#col-AGENDADO h3').innerText = `📅 AGENDADO (${contadores.AGENDADO})`;
-    document.querySelector('#col-ENTRADA h3').innerText = `🚗 ENTRADA (${contadores.ENTRADA})`;
-    document.querySelector('#col-EXECUÇÃO h3').innerText = `🛠️ EXECUÇÃO (${contadores.EXECUÇÃO})`;
-    document.querySelector('#col-FINALIZADO h3').innerText = `✅ FINALIZADO (${contadores.FINALIZADO})`;
-    document.querySelector('#col-RETIRADO h3').innerText = `🏁 RETIRADO (${contadores.RETIRADO})`;
+    // Atualiza os títulos com as contagens com validação de existência dos elementos
+    const atualizarTitulo = (id, emoji, texto, cont) => {
+        const el = document.querySelector(`#col-${id} h3`);
+        if (el) el.innerText = `${emoji} ${texto} (${cont})`;
+    };
+
+    atualizarTitulo('AGENDADO', '📅', 'AGENDADO', contadores.AGENDADO);
+    atualizarTitulo('ENTRADA', '🚗', 'ENTRADA', contadores.ENTRADA);
+    atualizarTitulo('EXECUÇÃO', '🛠️', 'EXECUÇÃO', contadores.EXECUÇÃO);
+    atualizarTitulo('FINALIZADO', '✅', 'FINALIZADO', contadores.FINALIZADO);
+    atualizarTitulo('RETIRADO', '🏁', 'RETIRADO', contadores.RETIRADO);
 }
 
 // 🟢 SUPORTE A TOUCH (CELULAR)
 function adicionarSuporteTouch(card, id) {
-    card.addEventListener('touchstart', (e) => {
+    card.addEventListener('touchstart', () => {
         cardSendoArrastadoId = id;
     }, { passive: true });
 
@@ -188,8 +214,7 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
         const { error } = await _supabase
             .from('veiculos')
             .update({ status: novoStatus })
-            .eq('id', id)
-            .select();
+            .eq('id', id);
 
         if (error) {
             console.error("Erro no Supabase:", error);
@@ -212,7 +237,7 @@ function buscarPorPlaca(placaDigitada) {
     const placaLimpa = placaDigitada.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
     const veiculoEncontrado = veiculosLocais.find(v => 
-        v.placa.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
+        (v.placa || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
     );
 
     if (veiculoEncontrado) {
@@ -269,9 +294,9 @@ function carregarParaEdicao(id) {
     if (!v) return;
 
     document.getElementById('veiculo-id').value = v.id;
-    document.getElementById('cliente').value = v.cliente;
+    document.getElementById('cliente').value = v.cliente || '';
     document.getElementById('telefone').value = v.telefone || '';
-    document.getElementById('placa').value = v.placa;
+    document.getElementById('placa').value = v.placa || '';
     document.getElementById('mecanico').value = v.mecanico || '';
     document.getElementById('data_agendamento').value = v.data_agendamento || '';
     document.getElementById('status').value = v.status;
@@ -310,10 +335,7 @@ function limparFormulario() {
     document.getElementById('telefone').value = '';
     document.getElementById('placa').value = '';
     document.getElementById('mecanico').value = '';
-    
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('data_agendamento').value = hoje;
-    
+    document.getElementById('data_agendamento').value = getHojeLocal();
     document.getElementById('status').value = 'AGENDADO';
     document.getElementById('observacoes').value = '';
 
