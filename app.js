@@ -99,7 +99,6 @@ function exibirPainel(user) {
     
     buscarVeiculos();
 
-    // Executa a assinatura do Realtime no próximo ciclo para isolar do evento de login
     setTimeout(() => {
         inscreverRealtimeSupabase();
     }, 0);
@@ -139,13 +138,11 @@ function deveExibirRetirado(updatedAt) {
 
 async function inscreverRealtimeSupabase() {
     try {
-        // Limpa qualquer canal pré-existente registrado na instância do Supabase
         const canaisExistentes = _supabase.getChannels();
         for (const canal of canaisExistentes) {
             await _supabase.removeChannel(canal);
         }
 
-        // Cria a nova escuta de forma segura
         _supabase
             .channel('mudancas-veiculos')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
@@ -275,17 +272,22 @@ function renderizarPainel(filtroDigitado = null) {
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
 
             const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
+            const dataHtml = v.data_agendamento ? `<div class="card-data-topo">📅 ${v.data_agendamento}</div>` : '';
             
             card.innerHTML = `
                 <div class="card-header">
-                    <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
-                    ${osOrHtml}
+                    <div>
+                        <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
+                    </div>
+                    <div class="card-header-direita">
+                        ${osOrHtml}
+                        ${dataHtml}
+                    </div>
                 </div>
                 <div>
                     <span class="card-placa">🚘 ${v.placa || '-'}</span>
                 </div>
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
-                <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
 
                 <div class="fast-move">
