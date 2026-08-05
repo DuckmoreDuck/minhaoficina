@@ -273,7 +273,22 @@ function renderizarPainel(filtroDigitado = null) {
 
             const osOrHtml = v.os_or ? `<span class="card-os" style="font-weight:bold; font-size:12px;">OS/OR: ${v.os_or}</span>` : '';
             const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-top:2px;">📅 ${v.data_agendamento}</div>` : '';
+
+            // 🏷️ Construção das Tags no Card
+            let tagsHtml = '';
+            if (v.chk_orcamento_pendente) tagsHtml += `<span style="background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Aguard. Orçamento</span>`;
+            if (v.chk_orcamento_aprovado) tagsHtml += `<span style="background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">✅ Orç. Aprovado</span>`;
             
+            if (v.chk_aguardando_pecas) {
+                let infoPeca = '📦 Aguard. Peças';
+                if (v.fornecedor || v.codigo_peca) {
+                    infoPeca += ` (${[v.fornecedor, v.codigo_peca].filter(Boolean).join(' - ')})`;
+                }
+                tagsHtml += `<span style="background:#f3e5f5; color:#7b1fa2; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px; display:inline-block; margin-top:2px;">${infoPeca}</span>`;
+            }
+
+            const containerTags = tagsHtml ? `<div style="margin: 6px 0;">${tagsHtml}</div>` : '';
+
             card.innerHTML = `
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
                     <div>
@@ -287,6 +302,7 @@ function renderizarPainel(filtroDigitado = null) {
                 <div>
                     <span class="card-placa" style="font-size: 1.35rem; font-weight: bold; color: #1a252f; display: block; margin: 4px 0 8px 0;">🚘 ${v.placa || '-'}</span>
                 </div>
+                ${containerTags}
                 <p style="margin: 4px 0;"><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p style="margin: 4px 0;"><em>${v.observacoes || ''}</em></p>
 
@@ -424,6 +440,14 @@ async function salvarVeiculo() {
         data_agendamento: dataCampo ? dataCampo : null,
         status: document.getElementById('status').value,
         observacoes: document.getElementById('observacoes').value.trim().toUpperCase(),
+        
+        // 📋 Caixas de marcação
+        chk_orcamento_pendente: document.getElementById('chk_orcamento_pendente')?.checked || false,
+        chk_orcamento_aprovado: document.getElementById('chk_orcamento_aprovado')?.checked || false,
+        chk_aguardando_pecas: document.getElementById('chk_aguardando_pecas')?.checked || false,
+        fornecedor: document.getElementById('fornecedor')?.value.trim().toUpperCase() || '',
+        codigo_peca: document.getElementById('codigo_peca')?.value.trim().toUpperCase() || '',
+
         updated_at: new Date().toISOString()
     };
 
@@ -470,6 +494,14 @@ function carregarParaEdicao(id) {
     document.getElementById('status').value = v.status;
     document.getElementById('observacoes').value = v.observacoes || '';
 
+    // Carregar checkboxes
+    if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = !!v.chk_orcamento_pendente;
+    if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = !!v.chk_orcamento_aprovado;
+    if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = !!v.chk_aguardando_pecas;
+    
+    if (document.getElementById('fornecedor')) document.getElementById('fornecedor').value = v.fornecedor || '';
+    if (document.getElementById('codigo_peca')) document.getElementById('codigo_peca').value = v.codigo_peca || '';
+
     document.getElementById('form-title').innerText = "Editar Cadastro do Veículo";
     document.getElementById('btn-salvar').innerText = "Salvar Alterações";
     document.getElementById('btn-cancelar').style.display = "inline-block";
@@ -507,6 +539,14 @@ function limparFormulario() {
     document.getElementById('data_agendamento').value = getHojeLocal();
     document.getElementById('status').value = 'AGENDADO';
     document.getElementById('observacoes').value = '';
+
+    // Limpar Checkboxes
+    if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = false;
+    if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = false;
+    if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = false;
+    
+    if (document.getElementById('fornecedor')) document.getElementById('fornecedor').value = '';
+    if (document.getElementById('codigo_peca')) document.getElementById('codigo_peca').value = '';
 
     document.getElementById('form-title').innerText = "Cadastrar Novo Veículo";
     document.getElementById('btn-salvar').innerText = "Adicionar Veículo";
