@@ -2,246 +2,82 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Veículos - Oficina</title>
-    <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f6f9; margin: 0; padding: 12px; }
-        h1 { color: #2c3e50; font-size: 20px; margin: 0 0 12px 0; text-align: center; }
-        
-        input[type="text"], textarea { text-transform: uppercase; }
-
-        .form-container { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 10px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 100%; outline: none; }
-        
-        .form-actions { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; text-align: center; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-
-        .search-container { margin-bottom: 12px; }
-        .search-container input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; }
-
-        /* NAVEGAÇÃO DE STATUS EM ABAS NO MOBILE */
-        .mobile-tabs {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .tab-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #475569;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .tab-btn.active {
-            background: #3498db;
-            color: white;
-        }
-
-        /* KANBAN ENGLOBANDO TODOS OS STATUS */
-        .kanban-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-
-        .kanban { 
-            display: grid; 
-            grid-template-columns: repeat(5, minmax(210px, 1fr)); 
-            gap: 8px; 
-            width: 100%;
-        }
-
-        .column { 
-            background: #ebedf0; 
-            border-radius: 10px; 
-            padding: 8px; 
-            width: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 300px;
-            max-height: 80vh;
-        }
-
-        .column h3 { 
-            margin: 0 0 8px 0; 
-            font-size: 12px; 
-            color: #2c3e50; 
-            border-bottom: 2px solid #cbd5e1; 
-            padding-bottom: 4px; 
-            text-align: center; 
-            white-space: nowrap;
-        }
-        
-        .cards-container { 
-            flex: 1; 
-            min-height: 150px; 
-            overflow-y: auto; 
-            padding: 4px;
-            border: 2px dashed transparent;
-            transition: border-color 0.2s;
-        }
-
-        .cards-container.drag-over {
-            border-color: #3498db;
-            background: #e0f2fe;
-        }
-
-        /* CARDS COMPACTOS COM DESTAQUES */
-        .card { 
-            background: white; 
-            border-radius: 8px; 
-            padding: 10px; 
-            margin-bottom: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
-            cursor: grab; 
-            user-select: none;
-            touch-action: pan-y;
-            font-size: 12px;
-            border-left: 4px solid #3498db;
-        }
-        .card:active { cursor: grabbing; }
-
-        /* DESTAQUES DENTRO DO CARD */
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 6px;
-            gap: 6px;
-        }
-        .card-cliente {
-            font-size: 14px;
-            font-weight: 800;
-            color: #1e293b;
-            margin: 0;
-            text-transform: uppercase;
-            line-height: 1.2;
-        }
-        .card-os {
-            background: #fef08a;
-            color: #854d0e;
-            font-weight: bold;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #fde047;
-            white-space: nowrap;
-        }
-        .card-placa {
-            display: inline-block;
-            background: #f1f5f9;
-            color: #0f172a;
-            font-weight: bold;
-            font-family: monospace;
-            font-size: 12px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #cbd5e1;
-            margin-bottom: 4px;
-        }
-
-        .card p { margin: 2px 0; font-size: 11px; color: #555; }
-        
-        /* MOVER RÁPIDO NO CARD */
-        .fast-move {
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .fast-move select {
-            font-size: 11px;
-            padding: 4px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background: #f8fafc;
-        }
-
-        /* AÇÕES DO CARD */
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; }
-        .card-actions button { padding: 6px 2px; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; color: white; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Inicialização do Supabase (Ajuste com suas credenciais se necessário)
+        const SUPABASE_URL = 'https://sua-url-supabase.supabase.co';
+        const SUPABASE_KEY = 'sua-chave-anon-supabase';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
-    <div id="login-screen" style="position: fixed; inset: 0; background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-            <h2 style="margin-top:0; color:#2c3e50; text-align:center;">🔑 Acesso Oficina</h2>
+    <!-- 🔒 TELA DE LOGIN -->
+    <div id="login-screen" style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #eef2f3;">
+        <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px;">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">🔐 Acesso Oficina</h2>
             <form id="form-login">
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label for="login-usuario">Usuário ou E-mail</label>
-                    <input type="text" id="login-usuario" required placeholder="Digite seu usuário ou e-mail" style="text-transform: lowercase;">
+                <div style="margin-bottom: 15px;">
+                    <label>Usuário:</label>
+                    <input type="text" id="login-usuario" placeholder="Digite seu usuário" required style="width: 100%; padding: 8px; margin-top: 5px;">
                 </div>
-                <div class="form-group" style="margin-bottom: 18px;">
-                    <label for="login-senha">Senha</label>
-                    <input type="password" id="login-senha" required placeholder="••••••••">
+                <div style="margin-bottom: 20px;">
+                    <label>Senha:</label>
+                    <input type="password" id="login-senha" placeholder="Digite sua senha" required style="width: 100%; padding: 8px; margin-top: 5px;">
                 </div>
-                <button type="submit" id="btn-login" class="btn btn-success" style="width: 100%;">Entrar no Sistema</button>
+                <button type="submit" id="btn-login" style="width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Entrar no Sistema</button>
             </form>
         </div>
     </div>
 
-    <!-- PAINEL PRINCIPAL -->
-    <div id="app-content" style="display: none;">
-        
-        <!-- BARRA DO USUARIO LOGADO -->
-        <div id="user-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #fff; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <span id="user-display" style="font-size: 12px; font-weight: bold; color: #2c3e50;"></span>
-            <button onclick="fazerLogout()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; flex: initial;">🚪 Sair</button>
+    <!-- 🚗 CONTEÚDO PRINCIPAL DO PAINEL -->
+    <div id="app-content" style="display: none; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 10px 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <span id="user-display" style="font-weight: bold; color: #34495e;">👤 Usuário: Carregando...</span>
+            <button onclick="fazerLogout()" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Sair</button>
         </div>
 
-        <h1>📋 Oficina - Controle de Veículos</h1>
+        <h1 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">📋 Oficina - Controle de Veículos</h1>
 
-        <!-- FORMULÁRIO DE CADASTRO -->
-        <div class="form-container">
-            <h2 id="form-title" style="font-size: 14px; margin-top:0;">Cadastrar Novo Veículo</h2>
+        <!-- 📝 FORMULÁRIO DE CADASTRO E EDIÇÃO -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 25px;">
+            <h3 id="form-title" style="margin-top: 0; color: #34495e;">Cadastrar Novo Veículo</h3>
+            
             <form id="form-veiculo" onsubmit="event.preventDefault(); salvarVeiculo();">
                 <input type="hidden" id="veiculo-id">
                 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="os_or">OS / OR</label>
-                        <input type="text" id="os_or" placeholder="EX: 1024 / OR-50">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <div style="flex: 1; min-width: 120px;">
+                        <label style="font-size: 12px; font-weight: bold;">OS / OR:</label>
+                        <input type="text" id="os_or" placeholder="EX: 1024 / OR-50" style="width: 100%; padding: 6px;">
                     </div>
-                    <div class="form-group">
-                        <label for="placa">Placa *</label>
-                        <input type="text" id="placa" placeholder="EX: ABC1D23" required onblur="buscarPorPlaca(this.value)">
+                    <div style="flex: 1; min-width: 120px;">
+                        <label style="font-size: 12px; font-weight: bold;">Placa *:</label>
+                        <input type="text" id="placa" placeholder="EX: ABC1D23" style="width: 100%; padding: 6px;" required>
                     </div>
-                    <div class="form-group">
-                        <label for="cliente">Cliente *</label>
-                        <input type="text" id="cliente" placeholder="NOME DO CLIENTE" required>
+                    <div style="flex: 2; min-width: 180px;">
+                        <label style="font-size: 12px; font-weight: bold;">Cliente *:</label>
+                        <input type="text" id="cliente" placeholder="NOME DO CLIENTE" style="width: 100%; padding: 6px;" required>
                     </div>
-                    <div class="form-group">
-                        <label for="telefone">Telefone</label>
-                        <input type="tel" id="telefone" placeholder="(11) 99999-9999">
+                    <div style="flex: 1; min-width: 130px;">
+                        <label style="font-size: 12px; font-weight: bold;">Telefone:</label>
+                        <input type="text" id="telefone" placeholder="(11) 99999-9999" style="width: 100%; padding: 6px;">
                     </div>
-                    <div class="form-group">
-                        <label for="mecanico">Mecânico</label>
-                        <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO">
+                    <div style="flex: 1; min-width: 130px;">
+                        <label style="font-size: 12px; font-weight: bold;">Mecânico:</label>
+                        <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO" style="width: 100%; padding: 6px;">
                     </div>
-                    <div class="form-group">
-                        <label for="data_agendamento">Data Agendamento</label>
-                        <input type="date" id="data_agendamento">
+                    <div style="flex: 1; min-width: 130px;">
+                        <label style="font-size: 12px; font-weight: bold;">Data Agendamento:</label>
+                        <input type="date" id="data_agendamento" style="width: 100%; padding: 6px;">
                     </div>
-                    <div class="form-group">
-                        <label for="status">Status Inicial</label>
-                        <select id="status">
+                    <div style="flex: 1; min-width: 130px;">
+                        <label style="font-size: 12px; font-weight: bold;">Status Inicial:</label>
+                        <select id="status" style="width: 100%; padding: 6px;">
                             <option value="AGENDADO">AGENDADO</option>
                             <option value="ENTRADA">ENTRADA</option>
                             <option value="EXECUÇÃO">EXECUÇÃO</option>
@@ -251,25 +87,44 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label for="observacoes">Observações</label>
-                    <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO"></textarea>
+                <!-- 📌 CAIXINHAS DE MARCAÇÃO -->
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">
+                    <label style="cursor: pointer; font-size: 13px; font-weight: bold; color: #e65100;">
+                        <input type="checkbox" id="chk_orcamento_pendente"> ⏳ Aguardando Orçamento
+                    </label>
+                    <label style="cursor: pointer; font-size: 13px; font-weight: bold; color: #2e7d32;">
+                        <input type="checkbox" id="chk_orcamento_aprovado"> ✅ Orçamento Aprovado
+                    </label>
+                    <label style="cursor: pointer; font-size: 13px; font-weight: bold; color: #7b1fa2;">
+                        <input type="checkbox" id="chk_aguardando_pecas"> 📦 Aguardando Peças
+                    </label>
+                    <div style="display: flex; gap: 8px; margin-left: auto;">
+                        <input type="text" id="fornecedor" placeholder="Fornecedor (ex: AutoPeças)" style="font-size: 12px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="text" id="codigo_peca" placeholder="Cód/Aviso (ex: #1042)" style="font-size: 12px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" id="btn-salvar" class="btn btn-success">Adicionar Veículo</button>
-                    <button type="button" id="btn-cancelar" class="btn btn-secondary" onclick="limparFormulario()" style="display: none;">Cancelar</button>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 12px; font-weight: bold;">Observações:</label>
+                    <textarea id="observacoes" placeholder="OBSERVAÇÕES DO VEÍCULO" style="width: 100%; height: 50px; padding: 6px;"></textarea>
                 </div>
+
+                <button type="button" id="btn-salvar" onclick="salvarVeiculo()" style="width: 100%; background: #27ae60; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                    Adicionar Veículo
+                </button>
+                <button type="button" id="btn-cancelar" onclick="limparFormulario()" style="display: none; width: 100%; background: #7f8c8d; color: white; padding: 8px; border: none; border-radius: 4px; margin-top: 5px; cursor: pointer;">
+                    Cancelar
+                </button>
             </form>
         </div>
 
-        <!-- BUSCA DE PLACA OU OS/OR OU CLIENTE -->
-        <div class="search-container">
-            <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa, cliente ou OS/OR..." oninput="renderizarPainel(this.value)">
+        <!-- 🔍 BARRA DE PESQUISA -->
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="busca-placa" oninput="renderizarPainel(this.value)" placeholder="🔍 PESQUISAR POR PLACA, CLIENTE OU OS/OR..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; text-transform: uppercase;">
         </div>
 
-        <!-- ABAS MOBILE -->
-        <div class="mobile-tabs">
+        <!-- 🔘 BOTÕES DE NAVEGAÇÃO DE ABAS (MOBILE) -->
+        <div class="tabs-navigation" style="display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;">
             <button class="tab-btn active" onclick="focarColuna('AGENDADO', this)">📅 AGENDADO</button>
             <button class="tab-btn" onclick="focarColuna('ENTRADA', this)">🚗 ENTRADA</button>
             <button class="tab-btn" onclick="focarColuna('EXECUÇÃO', this)">🛠️ EXECUÇÃO</button>
@@ -277,36 +132,35 @@
             <button class="tab-btn" onclick="focarColuna('RETIRADO', this)">🏁 RETIRADO</button>
         </div>
 
-        <!-- KANBAN -->
-        <div class="kanban-wrapper" id="kanban-wrapper">
-            <div class="kanban">
-                <div class="column" id="col-AGENDADO" data-status="AGENDADO">
-                    <h3>📅 AGENDADO (0)</h3>
-                    <div class="cards-container" id="container-AGENDADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'AGENDADO')"></div>
-                </div>
-                <div class="column" id="col-ENTRADA" data-status="ENTRADA">
-                    <h3>🚗 ENTRADA (0)</h3>
-                    <div class="cards-container" id="container-ENTRADA" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'ENTRADA')"></div>
-                </div>
-                <div class="column" id="col-EXECUÇÃO" data-status="EXECUÇÃO">
-                    <h3>🛠️ EXECUÇÃO (0)</h3>
-                    <div class="cards-container" id="container-EXECUÇÃO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'EXECUÇÃO')"></div>
-                </div>
-                <div class="column" id="col-FINALIZADO" data-status="FINALIZADO">
-                    <h3>✅ FINALIZADO (0)</h3>
-                    <div class="cards-container" id="container-FINALIZADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'FINALIZADO')"></div>
-                </div>
-                <div class="column" id="col-RETIRADO" data-status="RETIRADO">
-                    <h3>🏁 RETIRADO (0)</h3>
-                    <div class="cards-container" id="container-RETIRADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'RETIRADO')"></div>
-                </div>
+        <!-- 📊 COLUNAS KANBAN -->
+        <div class="kanban-board" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px;">
+            <div class="kanban-column" id="col-AGENDADO" data-status="AGENDADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'AGENDADO')">
+                <h3 style="background: #ebf5fb; color: #2980b9; padding: 10px; margin: 0; border-radius: 6px 6px 0 0;">📅 AGENDADO (0)</h3>
+                <div class="cards-container" id="container-AGENDADO"></div>
+            </div>
+
+            <div class="kanban-column" id="col-ENTRADA" data-status="ENTRADA" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'ENTRADA')">
+                <h3 style="background: #fef5e7; color: #d35400; padding: 10px; margin: 0; border-radius: 6px 6px 0 0;">🚗 ENTRADA (0)</h3>
+                <div class="cards-container" id="container-ENTRADA"></div>
+            </div>
+
+            <div class="kanban-column" id="col-EXECUÇÃO" data-status="EXECUÇÃO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'EXECUÇÃO')">
+                <h3 style="background: #f4ecf7; color: #8e44ad; padding: 10px; margin: 0; border-radius: 6px 6px 0 0;">🛠️ EXECUÇÃO (0)</h3>
+                <div class="cards-container" id="container-EXECUÇÃO"></div>
+            </div>
+
+            <div class="kanban-column" id="col-FINALIZADO" data-status="FINALIZADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'FINALIZADO')">
+                <h3 style="background: #eafaf1; color: #27ae60; padding: 10px; margin: 0; border-radius: 6px 6px 0 0;">✅ FINALIZADO (0)</h3>
+                <div class="cards-container" id="container-FINALIZADO"></div>
+            </div>
+
+            <div class="kanban-column" id="col-RETIRADO" data-status="RETIRADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'RETIRADO')">
+                <h3 style="background: #f2f4f4; color: #7f8c8d; padding: 10px; margin: 0; border-radius: 6px 6px 0 0;">🏁 RETIRADO (0)</h3>
+                <div class="cards-container" id="container-RETIRADO"></div>
             </div>
         </div>
     </div>
 
-    <!-- SDK SUPABASE E LOGICA -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
