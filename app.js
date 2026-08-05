@@ -2,7 +2,7 @@ let veiculosLocais = [];
 let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Escutador do formulário de login (se existir no HTML)
+    // Escutador do formulário de login
     const formLogin = document.getElementById('form-login');
     if (formLogin) {
         formLogin.addEventListener('submit', (e) => {
@@ -463,7 +463,7 @@ function notificarWhatsApp(id) {
     window.open(urlCompleta, '_blank');
 }
 
-// 🌐 EXPORTAÇÃO GLOBAL (Garante o acesso aos eventos inline HTML)
+// 🌐 EXPORTAÇÃO GLOBAL
 window.fazerLogin = fazerLogin;
 window.fazerLogout = fazerLogout;
 window.dragStart = dragStart;
@@ -472,8 +472,10 @@ window.dragLeave = dragLeave;
 window.drop = drop;
 window.focarColuna = focarColuna;
 window.atualizarStatusNoSupabase = atualizarStatusNoSupabase;
+window.buscarPorPlaca = buscarPorPlaca;
 window.salvarVeiculo = salvarVeiculo;
 window.carregarParaEdicao = carregarParaEdicao;
 window.excluirVeiculo = excluirVeiculo;
 window.limparFormulario = limparFormulario;
 window.notificarWhatsApp = notificarWhatsApp;
+window.renderizarPainel = renderizarPainel;
