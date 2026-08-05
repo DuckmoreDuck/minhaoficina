@@ -272,7 +272,8 @@ function renderizarPainel(filtroDigitado = null) {
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
 
             const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
-            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-bottom: 4px; font-weight: 500;">📅 ${v.data_agendamento}</div>` : '';
+            // Adicionado white-space: nowrap para impedir que a data quebre de linha de jeito nenhum
+            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-bottom: 4px; font-weight: 500; white-space: nowrap;">📅 ${v.data_agendamento}</div>` : '';
 
             // 🏷️ Construção das Tags no Card
             let tagsHtml = '';
