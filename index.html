@@ -108,7 +108,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
             cursor: grab; 
             user-select: none;
-            touch-action: none;
+            touch-action: pan-y; /* Permite rolagem da tela no mobile */
             font-size: 12px;
         }
         .card:active { cursor: grabbing; }
@@ -144,7 +144,7 @@
     <!-- FORMULÁRIO -->
     <div class="form-container">
         <h2 id="form-title" style="font-size: 14px; margin-top:0;">Cadastrar Novo Veículo</h2>
-        <form id="form-veiculo">
+        <form id="form-veiculo" onsubmit="event.preventDefault(); salvarVeiculo();">
             <input type="hidden" id="veiculo-id">
             
             <div class="form-grid">
@@ -186,7 +186,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="button" id="btn-salvar" class="btn btn-success" onclick="salvarVeiculo()">Adicionar Veículo</button>
+                <button type="submit" id="btn-salvar" class="btn btn-success">Adicionar Veículo</button>
                 <button type="button" id="btn-cancelar" class="btn btn-secondary" onclick="limparFormulario()" style="display: none;">Cancelar</button>
             </div>
         </form>
