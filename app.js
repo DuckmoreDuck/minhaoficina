@@ -272,7 +272,7 @@ function renderizarPainel(filtroDigitado = null) {
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
 
             const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
-            const dataHtml = v.data_agendamento ? `<span style="font-size:11px; color:#666; display:inline-block; margin-left:4px;">📅 ${v.data_agendamento}</span>` : '';
+            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-bottom: 4px; font-weight: 500;">📅 ${v.data_agendamento}</div>` : '';
 
             // 🏷️ Construção das Tags no Card
             let tagsHtml = '';
@@ -290,13 +290,13 @@ function renderizarPainel(filtroDigitado = null) {
             const containerTags = tagsHtml ? `<div style="margin: 6px 0;">${tagsHtml}</div>` : '';
 
             card.innerHTML = `
+                ${dataHtml}
                 <div class="card-header">
                     <div class="card-cliente-wrapper">
                         <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
                     </div>
                     <div class="card-meta-wrapper">
                         ${osOrHtml}
-                        ${dataHtml}
                     </div>
                 </div>
                 <div>
