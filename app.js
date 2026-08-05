@@ -274,8 +274,16 @@ function renderizarPainel(filtroDigitado = null) {
             const osOrHtml = v.os_or ? `<span class="card-os" style="display: block;">OS/OR: ${v.os_or}</span>` : '';
             const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-top: 2px; font-weight: 500; white-space: nowrap; text-align: right;">📅 ${v.data_agendamento}</div>` : '';
 
+            // 🏷️ Tag de Tipo de Veículo (Carro ou Van)
+            let tipoVeiculoHtml = '';
+            if (v.tipo_veiculo === 'VAN') {
+                tipoVeiculoHtml = `<span style="background:#e0f7fa; color:#006064; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">🚐 Van</span>`;
+            } else if (v.tipo_veiculo === 'CARRO') {
+                tipoVeiculoHtml = `<span style="background:#eceff1; color:#37474f; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">🚗 Carro</span>`;
+            }
+
             // 🏷️ Construção das Tags no Card
-            let tagsHtml = '';
+            let tagsHtml = tipoVeiculoHtml;
             if (v.chk_orcamento_pendente) tagsHtml += `<span style="background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Aguard. Orçamento</span>`;
             if (v.chk_orcamento_aprovado) tagsHtml += `<span style="background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">✅ Orç. Aprovado</span>`;
             
@@ -288,6 +296,7 @@ function renderizarPainel(filtroDigitado = null) {
             }
 
             const containerTags = tagsHtml ? `<div style="margin: 6px 0;">${tagsHtml}</div>` : '';
+            const alinhadorHtml = v.alinhador ? `<p style="margin: 4px 0; font-size: 12px; color: #444;"><strong>Alinhador:</strong> ${v.alinhador}</p>` : '';
 
             card.innerHTML = `
                 <div class="card-header">
@@ -304,6 +313,7 @@ function renderizarPainel(filtroDigitado = null) {
                 </div>
                 ${containerTags}
                 <p style="margin: 4px 0; font-size: 13px;"><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
+                ${alinhadorHtml}
                 <p style="margin: 4px 0;"><em>${v.observacoes || ''}</em></p>
 
                 <div class="fast-move">
@@ -422,18 +432,17 @@ async function buscarPorPlaca(placaDigitada) {
         }
     }
 
-    // ALTERAÇÃO: Ao invés de carregar o veículo inteiro para edição (o que trazia tudo),
-    // preenchemos APENAS o cliente e o telefone quando a placa é encontrada, 
-    // mantendo o ID vazio para gerar um NOVO agendamento/registro limpo.
     if (veiculoEncontrado) {
         document.getElementById('cliente').value = veiculoEncontrado.cliente || '';
         document.getElementById('telefone').value = veiculoEncontrado.telefone || '';
         document.getElementById('placa').value = veiculoEncontrado.placa || '';
         
-        // Mantém o ID vazio para criar um novo registro e não sobrescrever o antigo
-        document.getElementById('veiculo-id').value = '';
+        // Puxa o tipo de veículo se já estiver cadastrado anteriormente
+        if (document.getElementById('tipo_veiculo') && veiculoEncontrado.tipo_veiculo) {
+            document.getElementById('tipo_veiculo').value = veiculoEncontrado.tipo_veiculo;
+        }
         
-        // Foca no próximo campo útil (ex: mecânico ou observações)
+        document.getElementById('veiculo-id').value = '';
         document.getElementById('mecanico')?.focus();
     }
 }
@@ -448,6 +457,8 @@ async function salvarVeiculo() {
         telefone: document.getElementById('telefone').value.trim(),
         placa: document.getElementById('placa').value.trim().toUpperCase(),
         mecanico: document.getElementById('mecanico').value.trim().toUpperCase(),
+        alinhador: document.getElementById('alinhador')?.value.trim().toUpperCase() || '',
+        tipo_veiculo: document.getElementById('tipo_veiculo')?.value || 'CARRO',
         data_agendamento: dataCampo ? dataCampo : null,
         status: document.getElementById('status').value,
         observacoes: document.getElementById('observacoes').value.trim().toUpperCase(),
@@ -501,6 +512,8 @@ function carregarParaEdicao(id) {
     document.getElementById('telefone').value = v.telefone || '';
     document.getElementById('placa').value = v.placa || '';
     document.getElementById('mecanico').value = v.mecanico || '';
+    if (document.getElementById('alinhador')) document.getElementById('alinhador').value = v.alinhador || '';
+    if (document.getElementById('tipo_veiculo')) document.getElementById('tipo_veiculo').value = v.tipo_veiculo || 'CARRO';
     document.getElementById('data_agendamento').value = v.data_agendamento || '';
     document.getElementById('status').value = v.status;
     document.getElementById('observacoes').value = v.observacoes || '';
@@ -547,6 +560,8 @@ function limparFormulario() {
     document.getElementById('telefone').value = '';
     document.getElementById('placa').value = '';
     document.getElementById('mecanico').value = '';
+    if (document.getElementById('alinhador')) document.getElementById('alinhador').value = '';
+    if (document.getElementById('tipo_veiculo')) document.getElementById('tipo_veiculo').value = 'CARRO';
     document.getElementById('data_agendamento').value = getHojeLocal();
     document.getElementById('status').value = 'AGENDADO';
     document.getElementById('observacoes').value = '';
