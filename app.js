@@ -2,41 +2,50 @@ let veiculosLocais = [];
 let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    document.getElementById('data_agendamento').value = getHojeLocal();
+    const dataElem = document.getElementById('data_agendamento');
+    if (dataElem) dataElem.value = getHojeLocal();
     configurarNavegacaoEnter();
 
     // Verificação de sessão ao carregar a página
-    const { data: { session } } = await _supabase.auth.getSession();
-    
-    if (session) {
-        exibirPainel(session.user);
-    } else {
-        ocultarPainel();
-    }
-
-    // Escutador de mudanças de Auth
-    _supabase.auth.onAuthStateChange((event, session) => {
+    if (typeof _supabase !== 'undefined') {
+        const { data: { session } } = await _supabase.auth.getSession();
+        
         if (session) {
             exibirPainel(session.user);
         } else {
             ocultarPainel();
         }
-    });
+
+        // Escutador de mudanças de Auth
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                exibirPainel(session.user);
+            } else {
+                ocultarPainel();
+            }
+        });
+    }
 });
 
 // 🟢 AUTENTICAÇÃO E SESSÃO
 async function fazerLogin() {
-    let usuarioInput = document.getElementById('login-usuario').value.trim().toLowerCase();
-    const password = document.getElementById('login-senha').value;
+    const elUsuario = document.getElementById('login-usuario');
+    const elSenha = document.getElementById('login-senha');
     const btn = document.getElementById('btn-login');
 
-    // Se o usuário digitou sem "@", converte para o domínio interno
+    if (!elUsuario || !elSenha) return;
+
+    let usuarioInput = elUsuario.value.trim().toLowerCase();
+    const password = elSenha.value;
+
     if (!usuarioInput.includes('@')) {
         usuarioInput = `${usuarioInput}@oficina.local`;
     }
 
-    btn.innerText = "Entrando...";
-    btn.disabled = true;
+    if (btn) {
+        btn.innerText = "Entrando...";
+        btn.disabled = true;
+    }
 
     try {
         const { data, error } = await _supabase.auth.signInWithPassword({ 
@@ -47,11 +56,13 @@ async function fazerLogin() {
         if (error) throw error;
 
     } catch (err) {
-        console.error("Erro completo do Supabase:", err);
+        console.error("Erro no Supabase Auth:", err);
         alert("Falha no login: " + (err.message === "Invalid login credentials" ? "Usuário ou senha incorretos." : err.message));
     } finally {
-        btn.innerText = "Entrar no Sistema";
-        btn.disabled = false;
+        if (btn) {
+            btn.innerText = "Entrar no Sistema";
+            btn.disabled = false;
+        }
     }
 }
 
@@ -61,20 +72,28 @@ async function fazerLogout() {
 }
 
 function exibirPainel(user) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
+    const loginScreen = document.getElementById('login-screen');
+    const appContent = document.getElementById('app-content');
+    const userDisplay = document.getElementById('user-display');
+
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (appContent) appContent.style.display = 'block';
     
-    // Mostra o e-mail ou nome limpo no topo
-    const nomeExibicao = user.email ? user.email.replace('@oficina.local', '').toUpperCase() : 'MECÂNICO';
-    document.getElementById('user-display').innerText = `👤 Usuário: ${nomeExibicao}`;
+    if (userDisplay) {
+        const nomeExibicao = user.email ? user.email.replace('@oficina.local', '').toUpperCase() : 'MECÂNICO';
+        userDisplay.innerText = `👤 Usuário: ${nomeExibicao}`;
+    }
     
     buscarVeiculos();
     inscreverRealtimeSupabase();
 }
 
 function ocultarPainel() {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app-content').style.display = 'none';
+    const loginScreen = document.getElementById('login-screen');
+    const appContent = document.getElementById('app-content');
+
+    if (loginScreen) loginScreen.style.display = 'flex';
+    if (appContent) appContent.style.display = 'none';
 }
 
 // 🟢 AUXILIARES DE DATA E REALTIME
