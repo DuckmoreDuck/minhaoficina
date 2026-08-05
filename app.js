@@ -2,17 +2,82 @@ let veiculosLocais = [];
 let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Correção do fuso horário na data inicial
     document.getElementById('data_agendamento').value = getHojeLocal();
-
     configurarNavegacaoEnter();
-    await buscarVeiculos();
 
-    // Recomendado: Realtime do Supabase (em vez de setInterval)
-    inscreverRealtimeSupabase();
+    // Verificação de sessão ao carregar a página
+    const { data: { session } } = await _supabase.auth.getSession();
+    
+    if (session) {
+        exibirPainel(session.user);
+    } else {
+        ocultarPainel();
+    }
+
+    // Escutador de mudanças de Auth
+    _supabase.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            exibirPainel(session.user);
+        } else {
+            ocultarPainel();
+        }
+    });
 });
 
-// Retorna YYYY-MM-DD no fuso local (evita bug das 21h do ISOString)
+// 🟢 AUTENTICAÇÃO E SESSÃO
+async function fazerLogin() {
+    let usuarioInput = document.getElementById('login-usuario').value.trim().toLowerCase();
+    const password = document.getElementById('login-senha').value;
+    const btn = document.getElementById('btn-login');
+
+    // Converte o usuário simples para o sufixo fixo do Supabase
+    if (!usuarioInput.includes('@')) {
+        usuarioInput = `${usuarioInput}@oficina.local`;
+    }
+
+    btn.innerText = "Entrando...";
+    btn.disabled = true;
+
+    try {
+        const { data, error } = await _supabase.auth.signInWithPassword({ 
+            email: usuarioInput, 
+            password: password 
+        });
+
+        if (error) throw error;
+
+    } catch (err) {
+        alert("Falha no login: Usuário ou senha incorretos.");
+        console.error("Erro no Auth:", err);
+    } finally {
+        btn.innerText = "Entrar no Sistema";
+        btn.disabled = false;
+    }
+}
+
+async function fazerLogout() {
+    await _supabase.auth.signOut();
+    window.location.reload();
+}
+
+function exibirPainel(user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    
+    // Extrai o nome do usuário removendo o sufixo @oficina.local
+    const nomeUsuario = user.email ? user.email.split('@')[0].toUpperCase() : 'MECÂNICO';
+    document.getElementById('user-display').innerText = `👤 Usuário: ${nomeUsuario}`;
+    
+    buscarVeiculos();
+    inscreverRealtimeSupabase();
+}
+
+function ocultarPainel() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-content').style.display = 'none';
+}
+
+// 🟢 AUXILIARES DE DATA E REALTIME
 function getHojeLocal() {
     const d = new Date();
     const ano = d.getFullYear();
@@ -21,7 +86,6 @@ function getHojeLocal() {
     return `${ano}-${mes}-${dia}`;
 }
 
-// 🟢 ESCUTAR MUDANÇAS EM TEMPO REAL (Sem precisar de setInterval repetitivo)
 function inscreverRealtimeSupabase() {
     _supabase
         .channel('mudancas-veiculos')
@@ -54,7 +118,7 @@ function configurarNavegacaoEnter() {
     });
 }
 
-// 🟢 FUNÇÕES DRAG & DROP NATIVAS
+// 🟢 DRAG & DROP
 function dragStart(ev, id) {
     cardSendoArrastadoId = id;
     ev.dataTransfer.setData("text/plain", id);
@@ -80,7 +144,7 @@ async function drop(ev, novoStatus) {
     await atualizarStatusNoSupabase(id, novoStatus);
 }
 
-// 🟢 NAVEGAÇÃO DE ABAS NO CELULAR
+// 🟢 NAVEGAÇÃO DE ABAS
 function focarColuna(status, btnElement) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (btnElement) btnElement.classList.add('active');
@@ -91,7 +155,7 @@ function focarColuna(status, btnElement) {
     }
 }
 
-// 🟢 BUSCAR VEÍCULOS DO SUPABASE
+// 🟢 SUPABASE CRUD
 async function buscarVeiculos() {
     try {
         const { data, error } = await _supabase
@@ -107,8 +171,11 @@ async function buscarVeiculos() {
     }
 }
 
-// 🟢 RENDERIZAR CARDS COM CONTADOR E PESQUISA OTIMIZADA
-function renderizarPainel(filtroPlaca = '') {
+function renderizarPainel(filtroPlaca = null) {
+    if (filtroPlaca === null) {
+        filtroPlaca = document.getElementById('busca-placa')?.value || '';
+    }
+
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
     const contadores = { AGENDADO: 0, ENTRADA: 0, EXECUÇÃO: 0, FINALIZADO: 0, RETIRADO: 0 };
 
@@ -126,7 +193,6 @@ function renderizarPainel(filtroPlaca = '') {
             return;
         }
 
-        // Ocultar veículos retirados a menos que haja busca por placa ativa
         if (v.status === 'RETIRADO' && !filtro) {
             return;
         }
@@ -149,7 +215,6 @@ function renderizarPainel(filtroPlaca = '') {
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
 
-                <!-- MOVER RÁPIDO NO PRÓPRIO CARD -->
                 <div class="fast-move">
                     <span style="font-size: 10px; font-weight: bold; color: #666;">Status:</span>
                     <select onchange="atualizarStatusNoSupabase('${v.id}', this.value)">
@@ -173,7 +238,6 @@ function renderizarPainel(filtroPlaca = '') {
         }
     });
 
-    // Atualiza os títulos com as contagens com validação de existência dos elementos
     const atualizarTitulo = (id, emoji, texto, cont) => {
         const el = document.querySelector(`#col-${id} h3`);
         if (el) el.innerText = `${emoji} ${texto} (${cont})`;
@@ -186,7 +250,6 @@ function renderizarPainel(filtroPlaca = '') {
     atualizarTitulo('RETIRADO', '🏁', 'RETIRADO', contadores.RETIRADO);
 }
 
-// 🟢 SUPORTE A TOUCH (CELULAR)
 function adicionarSuporteTouch(card, id) {
     card.addEventListener('touchstart', () => {
         cardSendoArrastadoId = id;
@@ -208,7 +271,6 @@ function adicionarSuporteTouch(card, id) {
     }, { passive: true });
 }
 
-// 🟢 ATUALIZAR STATUS NO SUPABASE
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const { error } = await _supabase
@@ -216,18 +278,15 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
             .update({ status: novoStatus })
             .eq('id', id);
 
-        if (error) {
-            console.error("Erro no Supabase:", error);
-            alert("Erro ao atualizar o status no banco de dados.");
-            return;
-        }
+        if (error) throw error;
 
         const v = veiculosLocais.find(item => item.id === id);
         if (v) v.status = novoStatus;
 
         renderizarPainel();
     } catch (err) {
-        console.error("Erro inesperado ao mover veículo:", err);
+        console.error("Erro ao mover veículo:", err);
+        alert("Erro ao atualizar o status no banco de dados.");
     }
 }
 
@@ -245,7 +304,6 @@ function buscarPorPlaca(placaDigitada) {
     }
 }
 
-// 🟢 SALVAR OU EDITAR VEÍCULO
 async function salvarVeiculo() {
     const id = document.getElementById('veiculo-id').value;
     const dataCampo = document.getElementById('data_agendamento').value;
