@@ -422,8 +422,19 @@ async function buscarPorPlaca(placaDigitada) {
         }
     }
 
+    // ALTERAÇÃO: Ao invés de carregar o veículo inteiro para edição (o que trazia tudo),
+    // preenchemos APENAS o cliente e o telefone quando a placa é encontrada, 
+    // mantendo o ID vazio para gerar um NOVO agendamento/registro limpo.
     if (veiculoEncontrado) {
-        carregarParaEdicao(veiculoEncontrado.id);
+        document.getElementById('cliente').value = veiculoEncontrado.cliente || '';
+        document.getElementById('telefone').value = veiculoEncontrado.telefone || '';
+        document.getElementById('placa').value = veiculoEncontrado.placa || '';
+        
+        // Mantém o ID vazio para criar um novo registro e não sobrescrever o antigo
+        document.getElementById('veiculo-id').value = '';
+        
+        // Foca no próximo campo útil (ex: mecânico ou observações)
+        document.getElementById('mecanico')?.focus();
     }
 }
 
