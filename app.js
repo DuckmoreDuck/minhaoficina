@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (dataElem) dataElem.value = getHojeLocal();
     configurarNavegacaoEnter();
 
-    // Verificação de sessão ao carregar a página
+    // Verificação de sessão ao carregar
     if (typeof _supabase !== 'undefined') {
         const { data: { session } } = await _supabase.auth.getSession();
         
@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             ocultarPainel();
         }
 
-        // Escutador de mudanças de Auth
         _supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 exibirPainel(session.user);
@@ -57,7 +56,7 @@ async function fazerLogin() {
     }
 
     try {
-        const { data, error } = await _supabase.auth.signInWithPassword({ 
+        const { error } = await _supabase.auth.signInWithPassword({ 
             email: usuarioInput, 
             password: password 
         });
@@ -105,7 +104,7 @@ function ocultarPainel() {
     if (appContent) appContent.style.display = 'none';
 }
 
-// 🟢 AUXILIARES DE DATA E REALTIME
+// 🟢 AUXILIARES
 function getHojeLocal() {
     const d = new Date();
     const ano = d.getFullYear();
@@ -114,17 +113,14 @@ function getHojeLocal() {
     return `${ano}-${mes}-${dia}`;
 }
 
-// Função auxiliar para validar se um veículo RETIRADO deve aparecer na coluna do dia
 function deveExibirRetirado(updatedAt) {
     if (!updatedAt) return true;
 
     const agora = new Date();
     const dataAtualizacao = new Date(updatedAt);
 
-    // Verifica se foi alterado para RETIRADO no dia de hoje
     const ehHoje = agora.toDateString() === dataAtualizacao.toDateString();
 
-    // Se já passou das 18h00 do dia, limpa da coluna
     if (agora.getHours() >= 18) {
         return false;
     }
@@ -235,13 +231,10 @@ function renderizarPainel(filtroPlaca = null) {
     veiculosLocais.forEach(v => {
         const placaStr = (v.placa || '').toLowerCase();
 
-        // Se houver texto no campo de busca por placa, aplica o filtro de texto
         if (filtro && !placaStr.includes(filtro)) {
             return;
         }
 
-        // Lógica da coluna RETIRADO:
-        // Se NÃO HOUVER busca por placa ativa, oculta os retirados de dias anteriores ou após as 18h
         if (v.status === 'RETIRADO' && !filtro) {
             if (!deveExibirRetirado(v.updated_at)) {
                 return;
@@ -324,37 +317,65 @@ function adicionarSuporteTouch(card, id) {
 
 async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
-        const { error } = await _supabase
+        const agoraIso = new Date().toISOString();
+        
+        // Tenta atualizar com o updated_at primeiro
+        let { error } = await _supabase
             .from('veiculos')
             .update({ 
                 status: novoStatus,
-                updated_at: new Date().toISOString() // Atualiza o timestamp para a regra das 18h funcionar com precisão
+                updated_at: agoraIso
             })
             .eq('id', id);
 
-        if (error) throw error;
+        // Se falhar (ex: se a coluna updated_at não existir no Supabase), tenta atualizar somente o status
+        if (error) {
+            console.warn("Tentando fallback de atualização simples sem updated_at:", error.message);
+            const resFallback = await _supabase
+                .from('veiculos')
+                .update({ status: novoStatus })
+                .eq('id', id);
+
+            if (resFallback.error) throw resFallback.error;
+        }
 
         const v = veiculosLocais.find(item => item.id === id);
         if (v) {
             v.status = novoStatus;
-            v.updated_at = new Date().toISOString();
+            v.updated_at = agoraIso;
         }
 
         renderizarPainel();
     } catch (err) {
-        console.error("Erro ao mover veículo:", err);
-        alert("Erro ao atualizar o status no banco de dados.");
+        console.error("Erro detalhado ao atualizar status:", err);
+        alert("Erro ao atualizar o status no banco de dados: " + (err.message || JSON.stringify(err)));
     }
 }
 
-function buscarPorPlaca(placaDigitada) {
+async function buscarPorPlaca(placaDigitada) {
     if (!placaDigitada || placaDigitada.length < 3) return;
 
     const placaLimpa = placaDigitada.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-    const veiculoEncontrado = veiculosLocais.find(v => 
+    let veiculoEncontrado = veiculosLocais.find(v => 
         (v.placa || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
     );
+
+    if (!veiculoEncontrado) {
+        try {
+            const { data, error } = await _supabase
+                .from('veiculos')
+                .select('*')
+                .ilike('placa', `%${placaDigitada.trim()}%`)
+                .limit(1);
+
+            if (!error && data && data.length > 0) {
+                veiculoEncontrado = data[0];
+            }
+        } catch (err) {
+            console.error("Erro na busca remota por placa:", err);
+        }
+    }
 
     if (veiculoEncontrado) {
         carregarParaEdicao(veiculoEncontrado.id);
