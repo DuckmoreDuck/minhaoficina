@@ -30,7 +30,7 @@ async function fazerLogin() {
     const password = document.getElementById('login-senha').value;
     const btn = document.getElementById('btn-login');
 
-    // Converte o usuário simples para o sufixo fixo do Supabase
+    // Se o usuário digitou sem "@", converte para o domínio interno
     if (!usuarioInput.includes('@')) {
         usuarioInput = `${usuarioInput}@oficina.local`;
     }
@@ -47,8 +47,8 @@ async function fazerLogin() {
         if (error) throw error;
 
     } catch (err) {
-        alert("Falha no login: Usuário ou senha incorretos.");
-        console.error("Erro no Auth:", err);
+        console.error("Erro completo do Supabase:", err);
+        alert("Falha no login: " + (err.message === "Invalid login credentials" ? "Usuário ou senha incorretos." : err.message));
     } finally {
         btn.innerText = "Entrar no Sistema";
         btn.disabled = false;
@@ -64,9 +64,9 @@ function exibirPainel(user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-content').style.display = 'block';
     
-    // Extrai o nome do usuário removendo o sufixo @oficina.local
-    const nomeUsuario = user.email ? user.email.split('@')[0].toUpperCase() : 'MECÂNICO';
-    document.getElementById('user-display').innerText = `👤 Usuário: ${nomeUsuario}`;
+    // Mostra o e-mail ou nome limpo no topo
+    const nomeExibicao = user.email ? user.email.replace('@oficina.local', '').toUpperCase() : 'MECÂNICO';
+    document.getElementById('user-display').innerText = `👤 Usuário: ${nomeExibicao}`;
     
     buscarVeiculos();
     inscreverRealtimeSupabase();
