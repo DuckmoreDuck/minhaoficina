@@ -75,7 +75,11 @@ async function fazerLogin() {
 
 async function fazerLogout() {
     if (realtimeChannel) {
-        _supabase.removeChannel(realtimeChannel);
+        try {
+            await _supabase.removeChannel(realtimeChannel);
+        } catch (e) {
+            console.warn("Erro ao remover canal de realtime:", e);
+        }
         realtimeChannel = null;
     }
     await _supabase.auth.signOut();
@@ -131,16 +135,28 @@ function deveExibirRetirado(updatedAt) {
     return ehHoje;
 }
 
-function inscreverRealtimeSupabase() {
-    // Evita duplicar ou assinar um canal que já foi ativado
-    if (realtimeChannel) return;
+async function inscreverRealtimeSupabase() {
+    // Se já houver um canal ativo, remove para recriar com segurança
+    if (realtimeChannel) {
+        try {
+            await _supabase.removeChannel(realtimeChannel);
+        } catch (e) {
+            console.warn("Aviso ao desconectar canal anterior:", e);
+        }
+        realtimeChannel = null;
+    }
 
-    realtimeChannel = _supabase
-        .channel('mudancas-veiculos')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
-            buscarVeiculos();
-        })
-        .subscribe();
+    try {
+        realtimeChannel = _supabase
+            .channel('mudancas-veiculos')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
+                buscarVeiculos();
+            });
+
+        realtimeChannel.subscribe();
+    } catch (e) {
+        console.error("Erro ao configurar sincronização em tempo real:", e);
+    }
 }
 
 function configurarNavegacaoEnter() {
