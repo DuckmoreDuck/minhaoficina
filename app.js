@@ -303,7 +303,7 @@ function renderizarPainel(filtroDigitado = null) {
                     <span class="card-placa">🚘 ${v.placa || '-'}</span>
                 </div>
                 ${containerTags}
-                <p style="margin: 4px 0;"><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
+                <p style="margin: 4px 0; font-size: 13px;"><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p style="margin: 4px 0;"><em>${v.observacoes || ''}</em></p>
 
                 <div class="fast-move">
