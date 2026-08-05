@@ -263,9 +263,12 @@
                 </div>
 
                 <!-- 📌 CAIXINHAS DE MARCAÇÃO E CAMPOS EXTRAS DE PEÇAS/ORÇAMENTO -->
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef;">
                     <label style="cursor: pointer; font-size: 11px; font-weight: bold; color: #e65100;">
                         <input type="checkbox" id="chk_orcamento_pendente"> ⏳ Ag. Orçamento
+                    </label>
+                    <label style="cursor: pointer; font-size: 11px; font-weight: bold; color: #d97706;">
+                        <input type="checkbox" id="chk_aguardando_aprovacao"> ⏳ Ag. Aprovação
                     </label>
                     <label style="cursor: pointer; font-size: 11px; font-weight: bold; color: #2e7d32;">
                         <input type="checkbox" id="chk_orcamento_aprovado"> ✅ Orç. Aprovado
@@ -273,7 +276,7 @@
                     <label style="cursor: pointer; font-size: 11px; font-weight: bold; color: #7b1fa2;">
                         <input type="checkbox" id="chk_aguardando_pecas"> 📦 Ag. Peças
                     </label>
-                    <div style="display: flex; gap: 6px; flex: 1; min-width: 200px; margin-left: auto;">
+                    <div style="display: flex; gap: 6px; flex: 1; min-width: 180px; margin-left: auto;">
                         <input type="text" id="fornecedor" placeholder="Fornecedor (ex: AutoPeças)" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 50%;">
                         <input type="text" id="codigo_peca" placeholder="Cód/Aviso (ex: #1042)" style="font-size: 11px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; width: 50%;">
                     </div>
