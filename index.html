@@ -12,7 +12,7 @@
         input[type="text"], textarea { text-transform: uppercase; }
 
         .form-container { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 10px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; }
         .form-group input, .form-group select, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; width: 100%; outline: none; }
@@ -59,7 +59,7 @@
 
         .kanban { 
             display: grid; 
-            grid-template-columns: repeat(5, minmax(200px, 1fr)); 
+            grid-template-columns: repeat(5, minmax(210px, 1fr)); 
             gap: 8px; 
             width: 100%;
         }
@@ -99,20 +99,60 @@
             background: #e0f2fe;
         }
 
-        /* CARDS COMPACTOS */
+        /* CARDS COMPACTOS COM DESTAQUES */
         .card { 
             background: white; 
             border-radius: 8px; 
-            padding: 8px; 
+            padding: 10px; 
             margin-bottom: 8px; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
             cursor: grab; 
             user-select: none;
             touch-action: pan-y;
             font-size: 12px;
+            border-left: 4px solid #3498db;
         }
         .card:active { cursor: grabbing; }
-        .card h4 { margin: 0 0 4px 0; color: #2c3e50; font-size: 13px; }
+
+        /* DESTAQUES DENTRO DO CARD */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+            gap: 6px;
+        }
+        .card-cliente {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        .card-os {
+            background: #fef08a;
+            color: #854d0e;
+            font-weight: bold;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #fde047;
+            white-space: nowrap;
+        }
+        .card-placa {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #0f172a;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 4px;
+        }
+
         .card p { margin: 2px 0; font-size: 11px; color: #555; }
         
         /* MOVER RÁPIDO NO CARD */
@@ -157,7 +197,7 @@
         </div>
     </div>
 
-    <!-- PAINEL PRINCIPAL (Oculto por padrão até o login) -->
+    <!-- PAINEL PRINCIPAL -->
     <div id="app-content" style="display: none;">
         
         <!-- BARRA DO USUARIO LOGADO -->
@@ -175,6 +215,10 @@
                 <input type="hidden" id="veiculo-id">
                 
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label for="os_or">OS / OR</label>
+                        <input type="text" id="os_or" placeholder="EX: 1024 / OR-50">
+                    </div>
                     <div class="form-group">
                         <label for="placa">Placa *</label>
                         <input type="text" id="placa" placeholder="EX: ABC1D23" required onblur="buscarPorPlaca(this.value)">
@@ -219,9 +263,9 @@
             </form>
         </div>
 
-        <!-- BUSCA DE PLACA -->
+        <!-- BUSCA DE PLACA OU OS/OR OU CLIENTE -->
         <div class="search-container">
-            <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa..." oninput="renderizarPainel(this.value)">
+            <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa, cliente ou OS/OR..." oninput="renderizarPainel(this.value)">
         </div>
 
         <!-- ABAS MOBILE -->
