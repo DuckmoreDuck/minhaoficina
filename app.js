@@ -1,6 +1,5 @@
 let veiculosLocais = [];
 let cardSendoArrastadoId = null;
-let realtimeChannel = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const formLogin = document.getElementById('form-login');
@@ -74,14 +73,13 @@ async function fazerLogin() {
 }
 
 async function fazerLogout() {
-    if (realtimeChannel) {
-        try {
-            await _supabase.removeChannel(realtimeChannel);
-        } catch (e) {
-            console.warn("Erro ao remover canal de realtime:", e);
-        }
-        realtimeChannel = null;
+    try {
+        const canais = _supabase.getChannels();
+        canais.forEach(canal => _supabase.removeChannel(canal));
+    } catch (e) {
+        console.warn("Aviso ao limpar canais no logout:", e);
     }
+    
     await _supabase.auth.signOut();
     window.location.reload();
 }
@@ -100,7 +98,11 @@ function exibirPainel(user) {
     }
     
     buscarVeiculos();
-    inscreverRealtimeSupabase();
+
+    // Executa a assinatura do Realtime no próximo ciclo para isolar do evento de login
+    setTimeout(() => {
+        inscreverRealtimeSupabase();
+    }, 0);
 }
 
 function ocultarPainel() {
@@ -136,26 +138,22 @@ function deveExibirRetirado(updatedAt) {
 }
 
 async function inscreverRealtimeSupabase() {
-    // Se já houver um canal ativo, remove para recriar com segurança
-    if (realtimeChannel) {
-        try {
-            await _supabase.removeChannel(realtimeChannel);
-        } catch (e) {
-            console.warn("Aviso ao desconectar canal anterior:", e);
-        }
-        realtimeChannel = null;
-    }
-
     try {
-        realtimeChannel = _supabase
+        // Limpa qualquer canal pré-existente registrado na instância do Supabase
+        const canaisExistentes = _supabase.getChannels();
+        for (const canal of canaisExistentes) {
+            await _supabase.removeChannel(canal);
+        }
+
+        // Cria a nova escuta de forma segura
+        _supabase
             .channel('mudancas-veiculos')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'veiculos' }, () => {
                 buscarVeiculos();
-            });
-
-        realtimeChannel.subscribe();
+            })
+            .subscribe();
     } catch (e) {
-        console.error("Erro ao configurar sincronização em tempo real:", e);
+        console.warn("Sincronização Realtime offline ou redundante ignorada:", e);
     }
 }
 
