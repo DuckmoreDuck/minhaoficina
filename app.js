@@ -441,7 +441,7 @@ async function salvarVeiculo() {
         status: document.getElementById('status').value,
         observacoes: document.getElementById('observacoes').value.trim().toUpperCase(),
         
-        // 📋 Caixas de marcação
+        // 📋 Caixas de marcação e extras de peças/orçamento
         chk_orcamento_pendente: document.getElementById('chk_orcamento_pendente')?.checked || false,
         chk_orcamento_aprovado: document.getElementById('chk_orcamento_aprovado')?.checked || false,
         chk_aguardando_pecas: document.getElementById('chk_aguardando_pecas')?.checked || false,
@@ -494,7 +494,7 @@ function carregarParaEdicao(id) {
     document.getElementById('status').value = v.status;
     document.getElementById('observacoes').value = v.observacoes || '';
 
-    // Carregar checkboxes
+    // Carregar checkboxes e inputs extras
     if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = !!v.chk_orcamento_pendente;
     if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = !!v.chk_orcamento_aprovado;
     if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = !!v.chk_aguardando_pecas;
@@ -540,7 +540,7 @@ function limparFormulario() {
     document.getElementById('status').value = 'AGENDADO';
     document.getElementById('observacoes').value = '';
 
-    // Limpar Checkboxes
+    // Limpar Checkboxes e inputs extras
     if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = false;
     if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = false;
     if (document.getElementById('chk_aguardando_pecas')) document.getElementById('chk_aguardando_pecas').checked = false;
