@@ -108,7 +108,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
             cursor: grab; 
             user-select: none;
-            touch-action: pan-y; /* Permite rolagem da tela no mobile */
+            touch-action: pan-y;
             font-size: 12px;
         }
         .card:active { cursor: grabbing; }
@@ -139,100 +139,128 @@
 </head>
 <body>
 
-    <h1>📋 Oficina - Controle de Veículos</h1>
-
-    <!-- FORMULÁRIO -->
-    <div class="form-container">
-        <h2 id="form-title" style="font-size: 14px; margin-top:0;">Cadastrar Novo Veículo</h2>
-        <form id="form-veiculo" onsubmit="event.preventDefault(); salvarVeiculo();">
-            <input type="hidden" id="veiculo-id">
-            
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="placa">Placa *</label>
-                    <input type="text" id="placa" placeholder="EX: ABC1D23" required onblur="buscarPorPlaca(this.value)">
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen" style="position: fixed; inset: 0; background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <h2 style="margin-top:0; color:#2c3e50; text-align:center;">🔑 Acesso Oficina</h2>
+            <form onsubmit="event.preventDefault(); fazerLogin();">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="login-usuario">Usuário</label>
+                    <input type="text" id="login-usuario" required placeholder="Ex: joao" style="text-transform: lowercase;">
                 </div>
-                <div class="form-group">
-                    <label for="cliente">Cliente *</label>
-                    <input type="text" id="cliente" placeholder="NOME DO CLIENTE" required>
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" required placeholder="••••••••">
                 </div>
-                <div class="form-group">
-                    <label for="telefone">Telefone *</label>
-                    <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
-                </div>
-                <div class="form-group">
-                    <label for="mecanico">Mecânico</label>
-                    <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO">
-                </div>
-                <div class="form-group">
-                    <label for="data_agendamento">Data Agendamento</label>
-                    <input type="date" id="data_agendamento">
-                </div>
-                <div class="form-group">
-                    <label for="status">Status Inicial</label>
-                    <select id="status">
-                        <option value="AGENDADO">AGENDADO</option>
-                        <option value="ENTRADA">ENTRADA</option>
-                        <option value="EXECUÇÃO">EXECUÇÃO</option>
-                        <option value="FINALIZADO">FINALIZADO</option>
-                        <option value="RETIRADO">RETIRADO</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 10px;">
-                <label for="observacoes">Observações</label>
-                <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO"></textarea>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" id="btn-salvar" class="btn btn-success">Adicionar Veículo</button>
-                <button type="button" id="btn-cancelar" class="btn btn-secondary" onclick="limparFormulario()" style="display: none;">Cancelar</button>
-            </div>
-        </form>
+                <button type="submit" id="btn-login" class="btn btn-success" style="width: 100%;">Entrar no Sistema</button>
+            </form>
+        </div>
     </div>
 
-    <!-- BUSCA DE PLACA -->
-    <div class="search-container">
-        <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa..." oninput="renderizarPainel(this.value)">
-    </div>
+    <!-- PAINEL PRINCIPAL (Oculto por padrão até o login) -->
+    <div id="app-content" style="display: none;">
+        
+        <!-- BARRA DO USUARIO LOGADO -->
+        <div id="user-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #fff; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <span id="user-display" style="font-size: 12px; font-weight: bold; color: #2c3e50;"></span>
+            <button onclick="fazerLogout()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; flex: initial;">🚪 Sair</button>
+        </div>
 
-    <!-- ABAS RÁPIDAS PARA ATALHO DE NAVEGAÇÃO NO CELULAR -->
-    <div class="mobile-tabs">
-        <button class="tab-btn active" onclick="focarColuna('AGENDADO', this)">📅 AGENDADO</button>
-        <button class="tab-btn" onclick="focarColuna('ENTRADA', this)">🚗 ENTRADA</button>
-        <button class="tab-btn" onclick="focarColuna('EXECUÇÃO', this)">🛠️ EXECUÇÃO</button>
-        <button class="tab-btn" onclick="focarColuna('FINALIZADO', this)">✅ FINALIZADO</button>
-        <button class="tab-btn" onclick="focarColuna('RETIRADO', this)">🏁 RETIRADO</button>
-    </div>
+        <h1>📋 Oficina - Controle de Veículos</h1>
 
-    <!-- KANBAN COM PAINEL GERAL (HUD) -->
-    <div class="kanban-wrapper" id="kanban-wrapper">
-        <div class="kanban">
-            <div class="column" id="col-AGENDADO" data-status="AGENDADO">
-                <h3>📅 AGENDADO (0)</h3>
-                <div class="cards-container" id="container-AGENDADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'AGENDADO')"></div>
-            </div>
-            <div class="column" id="col-ENTRADA" data-status="ENTRADA">
-                <h3>🚗 ENTRADA (0)</h3>
-                <div class="cards-container" id="container-ENTRADA" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'ENTRADA')"></div>
-            </div>
-            <div class="column" id="col-EXECUÇÃO" data-status="EXECUÇÃO">
-                <h3>🛠️ EXECUÇÃO (0)</h3>
-                <div class="cards-container" id="container-EXECUÇÃO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'EXECUÇÃO')"></div>
-            </div>
-            <div class="column" id="col-FINALIZADO" data-status="FINALIZADO">
-                <h3>✅ FINALIZADO (0)</h3>
-                <div class="cards-container" id="container-FINALIZADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'FINALIZADO')"></div>
-            </div>
-            <div class="column" id="col-RETIRADO" data-status="RETIRADO">
-                <h3>🏁 RETIRADO (0)</h3>
-                <div class="cards-container" id="container-RETIRADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'RETIRADO')"></div>
+        <!-- FORMULÁRIO DE CADASTRO -->
+        <div class="form-container">
+            <h2 id="form-title" style="font-size: 14px; margin-top:0;">Cadastrar Novo Veículo</h2>
+            <form id="form-veiculo" onsubmit="event.preventDefault(); salvarVeiculo();">
+                <input type="hidden" id="veiculo-id">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="placa">Placa *</label>
+                        <input type="text" id="placa" placeholder="EX: ABC1D23" required onblur="buscarPorPlaca(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label for="cliente">Cliente *</label>
+                        <input type="text" id="cliente" placeholder="NOME DO CLIENTE" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Telefone *</label>
+                        <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mecanico">Mecânico</label>
+                        <input type="text" id="mecanico" placeholder="NOME DO MECÂNICO">
+                    </div>
+                    <div class="form-group">
+                        <label for="data_agendamento">Data Agendamento</label>
+                        <input type="date" id="data_agendamento">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status Inicial</label>
+                        <select id="status">
+                            <option value="AGENDADO">AGENDADO</option>
+                            <option value="ENTRADA">ENTRADA</option>
+                            <option value="EXECUÇÃO">EXECUÇÃO</option>
+                            <option value="FINALIZADO">FINALIZADO</option>
+                            <option value="RETIRADO">RETIRADO</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="observacoes">Observações</label>
+                    <textarea id="observacoes" rows="2" placeholder="OBSERVAÇÕES DO VEÍCULO"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="btn-salvar" class="btn btn-success">Adicionar Veículo</button>
+                    <button type="button" id="btn-cancelar" class="btn btn-secondary" onclick="limparFormulario()" style="display: none;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- BUSCA DE PLACA -->
+        <div class="search-container">
+            <input type="text" id="busca-placa" placeholder="🔍 Pesquisar por placa..." oninput="renderizarPainel(this.value)">
+        </div>
+
+        <!-- ABAS MOBILE -->
+        <div class="mobile-tabs">
+            <button class="tab-btn active" onclick="focarColuna('AGENDADO', this)">📅 AGENDADO</button>
+            <button class="tab-btn" onclick="focarColuna('ENTRADA', this)">🚗 ENTRADA</button>
+            <button class="tab-btn" onclick="focarColuna('EXECUÇÃO', this)">🛠️ EXECUÇÃO</button>
+            <button class="tab-btn" onclick="focarColuna('FINALIZADO', this)">✅ FINALIZADO</button>
+            <button class="tab-btn" onclick="focarColuna('RETIRADO', this)">🏁 RETIRADO</button>
+        </div>
+
+        <!-- KANBAN -->
+        <div class="kanban-wrapper" id="kanban-wrapper">
+            <div class="kanban">
+                <div class="column" id="col-AGENDADO" data-status="AGENDADO">
+                    <h3>📅 AGENDADO (0)</h3>
+                    <div class="cards-container" id="container-AGENDADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'AGENDADO')"></div>
+                </div>
+                <div class="column" id="col-ENTRADA" data-status="ENTRADA">
+                    <h3>🚗 ENTRADA (0)</h3>
+                    <div class="cards-container" id="container-ENTRADA" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'ENTRADA')"></div>
+                </div>
+                <div class="column" id="col-EXECUÇÃO" data-status="EXECUÇÃO">
+                    <h3>🛠️ EXECUÇÃO (0)</h3>
+                    <div class="cards-container" id="container-EXECUÇÃO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'EXECUÇÃO')"></div>
+                </div>
+                <div class="column" id="col-FINALIZADO" data-status="FINALIZADO">
+                    <h3>✅ FINALIZADO (0)</h3>
+                    <div class="cards-container" id="container-FINALIZADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'FINALIZADO')"></div>
+                </div>
+                <div class="column" id="col-RETIRADO" data-status="RETIRADO">
+                    <h3>🏁 RETIRADO (0)</h3>
+                    <div class="cards-container" id="container-RETIRADO" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'RETIRADO')"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- SDK OFICIAL DO SUPABASE VIA CDN -->
+    <!-- SDK SUPABASE E LOGICA -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <script src="app.js"></script>
