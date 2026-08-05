@@ -271,9 +271,8 @@ function renderizarPainel(filtroDigitado = null) {
             card.draggable = true;
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
 
-            const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
-            // Adicionado white-space: nowrap para impedir que a data quebre de linha de jeito nenhum
-            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-bottom: 4px; font-weight: 500; white-space: nowrap;">📅 ${v.data_agendamento}</div>` : '';
+            const osOrHtml = v.os_or ? `<span class="card-os" style="display: block;">OS/OR: ${v.os_or}</span>` : '';
+            const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-top: 2px; font-weight: 500; white-space: nowrap; text-align: right;">📅 ${v.data_agendamento}</div>` : '';
 
             // 🏷️ Construção das Tags no Card
             let tagsHtml = '';
@@ -291,13 +290,13 @@ function renderizarPainel(filtroDigitado = null) {
             const containerTags = tagsHtml ? `<div style="margin: 6px 0;">${tagsHtml}</div>` : '';
 
             card.innerHTML = `
-                ${dataHtml}
                 <div class="card-header">
                     <div class="card-cliente-wrapper">
                         <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
                     </div>
-                    <div class="card-meta-wrapper">
+                    <div class="card-meta-wrapper" style="display: flex; flex-direction: column; align-items: flex-end;">
                         ${osOrHtml}
+                        ${dataHtml}
                     </div>
                 </div>
                 <div>
