@@ -2,7 +2,6 @@ let veiculosLocais = [];
 let cardSendoArrastadoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Escutador do formulário de login
     const formLogin = document.getElementById('form-login');
     if (formLogin) {
         formLogin.addEventListener('submit', (e) => {
@@ -15,7 +14,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (dataElem) dataElem.value = getHojeLocal();
     configurarNavegacaoEnter();
 
-    // Verificação de sessão ao carregar
     if (typeof _supabase !== 'undefined') {
         const { data: { session } } = await _supabase.auth.getSession();
         
@@ -213,9 +211,9 @@ async function buscarVeiculos() {
     }
 }
 
-function renderizarPainel(filtroPlaca = null) {
-    if (filtroPlaca === null) {
-        filtroPlaca = document.getElementById('busca-placa')?.value || '';
+function renderizarPainel(filtroDigitado = null) {
+    if (filtroDigitado === null) {
+        filtroDigitado = document.getElementById('busca-placa')?.value || '';
     }
 
     const colunas = ['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'];
@@ -226,12 +224,14 @@ function renderizarPainel(filtroPlaca = null) {
         if (container) container.innerHTML = '';
     });
 
-    const filtro = filtroPlaca.toLowerCase().trim();
+    const filtro = filtroDigitado.toLowerCase().trim();
 
     veiculosLocais.forEach(v => {
         const placaStr = (v.placa || '').toLowerCase();
+        const clienteStr = (v.cliente || '').toLowerCase();
+        const osOrStr = (v.os_or || '').toLowerCase();
 
-        if (filtro && !placaStr.includes(filtro)) {
+        if (filtro && !placaStr.includes(filtro) && !clienteStr.includes(filtro) && !osOrStr.includes(filtro)) {
             return;
         }
 
@@ -251,10 +251,17 @@ function renderizarPainel(filtroPlaca = null) {
             card.className = 'card';
             card.draggable = true;
             card.setAttribute('ondragstart', `dragStart(event, '${v.id}')`);
+
+            const osOrHtml = v.os_or ? `<span class="card-os">OS/OR: ${v.os_or}</span>` : '';
             
             card.innerHTML = `
-                <h4>${v.cliente || 'CLIENTE SEM NOME'}</h4>
-                <p><strong>Placa:</strong> ${v.placa || '-'}</p>
+                <div class="card-header">
+                    <h4 class="card-cliente">${v.cliente || 'CLIENTE SEM NOME'}</h4>
+                    ${osOrHtml}
+                </div>
+                <div>
+                    <span class="card-placa">🚘 ${v.placa || '-'}</span>
+                </div>
                 <p><strong>Mecânico:</strong> ${v.mecanico || 'NÃO ATRIBUÍDO'}</p>
                 <p><strong>Data:</strong> ${v.data_agendamento || '-'}</p>
                 <p><em>${v.observacoes || ''}</em></p>
@@ -319,7 +326,6 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
     try {
         const agoraIso = new Date().toISOString();
         
-        // Tenta atualizar com o updated_at primeiro
         let { error } = await _supabase
             .from('veiculos')
             .update({ 
@@ -328,7 +334,6 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
             })
             .eq('id', id);
 
-        // Se falhar (ex: se a coluna updated_at não existir no Supabase), tenta atualizar somente o status
         if (error) {
             console.warn("Tentando fallback de atualização simples sem updated_at:", error.message);
             const resFallback = await _supabase
@@ -387,6 +392,7 @@ async function salvarVeiculo() {
     const dataCampo = document.getElementById('data_agendamento').value;
     
     const dados = {
+        os_or: document.getElementById('os_or').value.trim().toUpperCase(),
         cliente: document.getElementById('cliente').value.trim().toUpperCase(),
         telefone: document.getElementById('telefone').value.trim(),
         placa: document.getElementById('placa').value.trim().toUpperCase(),
@@ -431,6 +437,7 @@ function carregarParaEdicao(id) {
     if (!v) return;
 
     document.getElementById('veiculo-id').value = v.id;
+    document.getElementById('os_or').value = v.os_or || '';
     document.getElementById('cliente').value = v.cliente || '';
     document.getElementById('telefone').value = v.telefone || '';
     document.getElementById('placa').value = v.placa || '';
@@ -468,6 +475,7 @@ async function excluirVeiculo(id) {
 
 function limparFormulario() {
     document.getElementById('veiculo-id').value = '';
+    document.getElementById('os_or').value = '';
     document.getElementById('cliente').value = '';
     document.getElementById('telefone').value = '';
     document.getElementById('placa').value = '';
