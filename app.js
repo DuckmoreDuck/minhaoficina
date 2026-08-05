@@ -397,8 +397,8 @@ async function salvarVeiculo() {
         updated_at: new Date().toISOString()
     };
 
-    if (!dados.cliente || !dados.placa || !dados.telefone) {
-        alert("Por favor, preencha os campos obrigatórios: Cliente, Telefone e Placa!");
+    if (!dados.cliente || !dados.placa) {
+        alert("Por favor, preencha os campos obrigatórios: Cliente e Placa!");
         return;
     }
 
