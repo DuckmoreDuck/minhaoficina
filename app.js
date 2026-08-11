@@ -1,5 +1,5 @@
 // 🔗 LINK DO GOOGLE APPS SCRIPT
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZDmfd6MxTjM80s-5Ojmcrr_-ckT_zYKtVPxI--AUeW_RiOfEEJugtyQp_8sEF1g/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/library/d/1HteRDs3yGuZGdllvwspG51RkaDihYEMz9IuknpOZVmmS4pwS4LOult7i/2";
 
 let veiculosLocais = [];
 let cardSendoArrastadoId = null;
