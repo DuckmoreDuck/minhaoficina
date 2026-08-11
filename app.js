@@ -1,5 +1,5 @@
 // 🔗 COLE O SEU LINK DO GOOGLE APPS SCRIPT AQUI ENTRE AS ASPAS:
-const GOOGLE_SCRIPT_URL = "SUA_URL_DO_APPS_SCRIPT_AQUI";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZDmfd6MxTjM80s-5Ojmcrr_-ckT_zYKtVPxI--AUeW_RiOfEEJugtyQp_8sEF1g/exec";
 
 let veiculosLocais = [];
 let cardSendoArrastadoId = null;
