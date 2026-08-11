@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (dataElem) dataElem.value = getHojeLocal();
     configurarNavegacaoEnter();
 
-    // Se houver Supabase configurado para autenticação de login, mantém o fluxo
     if (typeof _supabase !== 'undefined') {
         try {
             const { data: { session } } = await _supabase.auth.getSession();
@@ -55,7 +54,7 @@ async function fazerLogin() {
         return;
     }
 
-    let usuarioInput = elUsuario.value.trim().toLowerCase();
+    let usuarioInput = String(elUsuario.value || '').trim().toLowerCase();
     const password = elSenha.value;
 
     if (!usuarioInput.includes('@')) {
@@ -113,14 +112,12 @@ function exibirPainel(user = null) {
     if (appContent) appContent.style.display = 'block';
     
     if (userDisplay) {
-        const nomeExibicao = (user && user.email) ? user.email.replace('@oficina.local', '').toUpperCase() : 'MECÂNICO';
+        const nomeExibicao = (user && user.email) ? String(user.email).replace('@oficina.local', '').toUpperCase() : 'MECÂNICO';
         userDisplay.innerText = `👤 Usuário: ${nomeExibicao}`;
     }
     
-    // Busca inicial de veículos
     buscarVeiculos();
 
-    // 🔄 Atualização automática a cada 15 segundos da planilha
     if (!intervaloAtualizacao) {
         intervaloAtualizacao = setInterval(buscarVeiculos, 15000);
     }
@@ -225,27 +222,26 @@ async function buscarVeiculos() {
             const resposta = await fetch(GOOGLE_SCRIPT_URL);
             const dadosPlanilha = await resposta.json();
 
-            // Mapeia os dados vindo do Google Sheets para a estrutura exata do sistema
             veiculosLocais = dadosPlanilha.map((item, index) => {
-                let statusTratado = (item['Status / Finalizado'] || item['Status'] || item['STATUS'] || 'AGENDADO').toString().toUpperCase().trim();
+                let statusTratado = String(item['Status / Finalizado'] || item['Status'] || item['STATUS'] || 'AGENDADO').toUpperCase().trim();
                 if (!['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'].includes(statusTratado)) {
                     statusTratado = 'AGENDADO';
                 }
 
-                let obsText = item['Relato do Cliente'] || item['Observações'] || '';
+                let obsText = String(item['Relato do Cliente'] || item['Observações'] || '');
                 if (item['Luz no Painel']) {
                     obsText = `[Luz Painel: ${item['Luz no Painel']}] ` + obsText;
                 }
 
                 return {
                     id: String(item['id'] || item['Placa'] || index),
-                    os_or: item['OS'] || item['OR'] || item['OS/OR'] || item['os_or'] || '',
-                    cliente: (item['Nome do Cliente'] || item['Cliente'] || item['cliente'] || '').toString().trim(),
-                    telefone: item['Telefone'] || item['telefone'] || '',
-                    placa: (item['Placa'] || item['placa'] || '').toString().trim(),
-                    mecanico: item['Mecânico'] || item['MECANICO'] || item['mecanico'] || '',
-                    alinhador: item['Alinhador'] || item['alinhador'] || '',
-                    tipo_veiculo: item['Tipo'] || item['tipo_veiculo'] || 'CARRO',
+                    os_or: String(item['OS'] || item['OR'] || item['OS/OR'] || item['os_or'] || '').trim(),
+                    cliente: String(item['Nome do Cliente'] || item['Cliente'] || item['cliente'] || '').trim(),
+                    telefone: String(item['Telefone'] || item['telefone'] || '').trim(),
+                    placa: String(item['Placa'] || item['placa'] || '').trim(),
+                    mecanico: String(item['Mecânico'] || item['MECANICO'] || item['mecanico'] || '').trim(),
+                    alinhador: String(item['Alinhador'] || item['alinhador'] || '').trim(),
+                    tipo_veiculo: String(item['Tipo'] || item['tipo_veiculo'] || 'CARRO').trim(),
                     data_agendamento: item['Data'] || item['data_agendamento'] || getHojeLocal(),
                     status: statusTratado,
                     observacoes: obsText,
@@ -253,8 +249,8 @@ async function buscarVeiculos() {
                     chk_aguardando_aprovacao: !!item['chk_aguardando_aprovacao'],
                     chk_orcamento_aprovado: !!item['chk_orcamento_aprovado'],
                     chk_aguardando_pecas: !!item['chk_aguardando_pecas'],
-                    fornecedor: item['fornecedor'] || '',
-                    codigo_peca: item['codigo_peca'] || '',
+                    fornecedor: String(item['fornecedor'] || ''),
+                    codigo_peca: String(item['codigo_peca'] || ''),
                     updated_at: item['updated_at'] || new Date().toISOString()
                 };
             });
@@ -266,7 +262,6 @@ async function buscarVeiculos() {
         }
     }
 
-    // Fallback: busca via Supabase caso a URL da planilha não esteja preenchida
     if (typeof _supabase !== 'undefined') {
         try {
             const { data, error } = await _supabase.from('veiculos').select('*');
@@ -292,12 +287,12 @@ function renderizarPainel(filtroDigitado = null) {
         if (container) container.innerHTML = '';
     });
 
-    const filtro = filtroDigitado.toLowerCase().trim();
+    const filtro = String(filtroDigitado || '').toLowerCase().trim();
 
     veiculosLocais.forEach(v => {
-        const placaStr = (v.placa || '').toLowerCase();
-        const clienteStr = (v.cliente || '').toLowerCase();
-        const osOrStr = (v.os_or || '').toLowerCase();
+        const placaStr = String(v.placa || '').toLowerCase();
+        const clienteStr = String(v.cliente || '').toLowerCase();
+        const osOrStr = String(v.os_or || '').toLowerCase();
 
         if (filtro && !placaStr.includes(filtro) && !clienteStr.includes(filtro) && !osOrStr.includes(filtro)) {
             return;
@@ -323,7 +318,6 @@ function renderizarPainel(filtroDigitado = null) {
             const osOrHtml = v.os_or ? `<span class="card-os" style="display: block;">OS/OR: ${v.os_or}</span>` : '';
             const dataHtml = v.data_agendamento ? `<div style="font-size:11px; color:#666; margin-top: 2px; font-weight: 500; white-space: nowrap; text-align: right;">📅 ${v.data_agendamento}</div>` : '';
 
-            // 🏷️ Tag de Tipo de Veículo (Carro ou Van)
             let tipoVeiculoHtml = '';
             if (v.tipo_veiculo === 'VAN') {
                 tipoVeiculoHtml = `<span style="background:#e0f7fa; color:#006064; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">🚐 Van</span>`;
@@ -331,7 +325,6 @@ function renderizarPainel(filtroDigitado = null) {
                 tipoVeiculoHtml = `<span style="background:#eceff1; color:#37474f; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">🚗 Carro</span>`;
             }
 
-            // 🏷️ Construção das Tags no Card
             let tagsHtml = tipoVeiculoHtml;
             if (v.chk_orcamento_pendente) tagsHtml += `<span style="background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Aguard. Orçamento</span>`;
             if (v.chk_aguardando_aprovacao) tagsHtml += `<span style="background:#fef3c7; color:#d97706; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; margin-right:4px;">⏳ Ag. Aprovação</span>`;
@@ -428,7 +421,6 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
         v.status = novoStatus;
         v.updated_at = new Date().toISOString();
 
-        // 🔄 Atualiza o status diretamente na Planilha do Google
         if (GOOGLE_SCRIPT_URL) {
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
@@ -466,12 +458,12 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
 }
 
 async function buscarPorPlaca(placaDigitada) {
-    if (!placaDigitada || placaDigitada.length < 3) return;
+    if (!placaDigitada || String(placaDigitada).length < 3) return;
 
-    const placaLimpa = placaDigitada.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const placaLimpa = String(placaDigitada).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
     let veiculoEncontrado = veiculosLocais.find(v => 
-        (v.placa || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
+        String(v.placa || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === placaLimpa
     );
 
     if (veiculoEncontrado) {
@@ -493,24 +485,23 @@ async function salvarVeiculo() {
     const dataCampo = document.getElementById('data_agendamento').value;
     
     const dados = {
-        os_or: document.getElementById('os_or').value.trim().toUpperCase(),
-        cliente: document.getElementById('cliente').value.trim().toUpperCase(),
-        telefone: document.getElementById('telefone').value.trim(),
-        placa: document.getElementById('placa').value.trim().toUpperCase(),
-        mecanico: document.getElementById('mecanico').value.trim().toUpperCase(),
-        alinhador: document.getElementById('alinhador')?.value.trim().toUpperCase() || '',
+        os_or: String(document.getElementById('os_or').value).trim().toUpperCase(),
+        cliente: String(document.getElementById('cliente').value).trim().toUpperCase(),
+        telefone: String(document.getElementById('telefone').value).trim(),
+        placa: String(document.getElementById('placa').value).trim().toUpperCase(),
+        mecanico: String(document.getElementById('mecanico').value).trim().toUpperCase(),
+        alinhador: String(document.getElementById('alinhador')?.value || '').trim().toUpperCase(),
         tipo_veiculo: document.getElementById('tipo_veiculo')?.value || 'CARRO',
         data_agendamento: dataCampo ? dataCampo : null,
         status: document.getElementById('status').value,
-        observacoes: document.getElementById('observacoes').value.trim().toUpperCase(),
+        observacoes: String(document.getElementById('observacoes').value).trim().toUpperCase(),
         
-        // 📋 Caixas de marcação e extras
         chk_orcamento_pendente: document.getElementById('chk_orcamento_pendente')?.checked || false,
         chk_aguardando_aprovacao: document.getElementById('chk_aguardando_aprovacao')?.checked || false,
         chk_orcamento_aprovado: document.getElementById('chk_orcamento_aprovado')?.checked || false,
         chk_aguardando_pecas: document.getElementById('chk_aguardando_pecas')?.checked || false,
-        fornecedor: document.getElementById('fornecedor')?.value.trim().toUpperCase() || '',
-        codigo_peca: document.getElementById('codigo_peca')?.value.trim().toUpperCase() || '',
+        fornecedor: String(document.getElementById('fornecedor')?.value || '').trim().toUpperCase(),
+        codigo_peca: String(document.getElementById('codigo_peca')?.value || '').trim().toUpperCase(),
 
         updated_at: new Date().toISOString()
     };
@@ -520,7 +511,6 @@ async function salvarVeiculo() {
         return;
     }
 
-    // 💾 Salva o novo veículo diretamente na Planilha do Google
     if (GOOGLE_SCRIPT_URL) {
         try {
             await fetch(GOOGLE_SCRIPT_URL, {
@@ -571,7 +561,6 @@ function carregarParaEdicao(id) {
     document.getElementById('status').value = v.status;
     document.getElementById('observacoes').value = v.observacoes || '';
 
-    // Checkboxes e inputs extras
     if (document.getElementById('chk_orcamento_pendente')) document.getElementById('chk_orcamento_pendente').checked = !!v.chk_orcamento_pendente;
     if (document.getElementById('chk_aguardando_aprovacao')) document.getElementById('chk_aguardando_aprovacao').checked = !!v.chk_aguardando_aprovacao;
     if (document.getElementById('chk_orcamento_aprovado')) document.getElementById('chk_orcamento_aprovado').checked = !!v.chk_orcamento_aprovado;
@@ -636,7 +625,7 @@ function notificarWhatsApp(id) {
         return;
     }
 
-    let num = v.telefone.replace(/\D/g, '');
+    let num = String(v.telefone).replace(/\D/g, '');
 
     if (num.length >= 10 && !num.startsWith('55')) {
         num = '55' + num;
