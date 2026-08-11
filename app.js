@@ -1,4 +1,4 @@
-// 🔗 COLE O SEU LINK DO GOOGLE APPS SCRIPT AQUI ENTRE AS ASPAS:
+// 🔗 LINK DO GOOGLE APPS SCRIPT
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZDmfd6MxTjM80s-5Ojmcrr_-ckT_zYKtVPxI--AUeW_RiOfEEJugtyQp_8sEF1g/exec";
 
 let veiculosLocais = [];
@@ -427,6 +427,23 @@ async function atualizarStatusNoSupabase(id, novoStatus) {
     if (v) {
         v.status = novoStatus;
         v.updated_at = new Date().toISOString();
+
+        // 🔄 Atualiza o status diretamente na Planilha do Google
+        if (GOOGLE_SCRIPT_URL) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        acao: 'atualizar_status',
+                        dados: { placa: v.placa, novoStatus: novoStatus }
+                    })
+                });
+            } catch (e) {
+                console.error("Erro ao enviar novo status para a planilha:", e);
+            }
+        }
     }
 
     if (typeof _supabase !== 'undefined') {
@@ -503,6 +520,23 @@ async function salvarVeiculo() {
         return;
     }
 
+    // 💾 Salva o novo veículo diretamente na Planilha do Google
+    if (GOOGLE_SCRIPT_URL) {
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    acao: 'salvar',
+                    dados: dados
+                })
+            });
+        } catch (e) {
+            console.error("Erro ao salvar dados na planilha:", e);
+        }
+    }
+
     if (typeof _supabase !== 'undefined') {
         try {
             if (id) {
@@ -518,7 +552,7 @@ async function salvarVeiculo() {
     }
 
     limparFormulario();
-    await buscarVeiculos();
+    setTimeout(buscarVeiculos, 1200);
 }
 
 function carregarParaEdicao(id) {
