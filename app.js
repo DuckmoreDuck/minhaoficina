@@ -220,6 +220,13 @@ async function buscarVeiculos() {
     if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SUA_URL_DO_APPS_SCRIPT_AQUI")) {
         try {
             const resposta = await fetch(GOOGLE_SCRIPT_URL);
+            
+            // Valida se o retorno é realmente JSON válido do Apps Script
+            const contentType = resposta.headers.get("content-type");
+            if (!resposta.ok || (contentType && !contentType.includes("application/json"))) {
+                throw new Error(`Resposta do Google Script inválida (retornou HTML ou erro ${resposta.status}). Verifique a permissão de implantação para 'Qualquer pessoa'.`);
+            }
+
             const dadosPlanilha = await resposta.json();
 
             veiculosLocais = dadosPlanilha.map((item, index) => {
