@@ -215,7 +215,7 @@ function focarColuna(status, btnElement) {
     }
 }
 
-// 🟢 BUSCA DE DADOS (AJUSTADA COM TRATAMENTO DE REDIRECIONAMENTO GOOGLE)
+// 🟢 BUSCA DE DADOS (COM TRATAMENTO SILENCIOSO PARA O GOOGLE SHEETS)
 async function buscarVeiculos() {
     if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SUA_URL_DO_APPS_SCRIPT_AQUI")) {
         try {
@@ -224,45 +224,50 @@ async function buscarVeiculos() {
                 redirect: 'follow'
             });
             
-            const dadosPlanilha = await resposta.json();
+            const textoResposta = await resposta.text();
 
-            veiculosLocais = dadosPlanilha.map((item, index) => {
-                let statusTratado = String(item['Status / Finalizado'] || item['Status'] || item['STATUS'] || 'AGENDADO').toUpperCase().trim();
-                if (!['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'].includes(statusTratado)) {
-                    statusTratado = 'AGENDADO';
-                }
+            // Validação para garantir que a resposta é um JSON válido antes de fazer o parse
+            if (textoResposta.trim().startsWith('[') || textoResposta.trim().startsWith('{')) {
+                const dadosPlanilha = JSON.parse(textoResposta);
 
-                let obsText = String(item['Relato do Cliente'] || item['Observações'] || '');
-                if (item['Luz no Painel']) {
-                    obsText = `[Luz Painel: ${item['Luz no Painel']}] ` + obsText;
-                }
+                veiculosLocais = dadosPlanilha.map((item, index) => {
+                    let statusTratado = String(item['Status / Finalizado'] || item['Status'] || item['STATUS'] || 'AGENDADO').toUpperCase().trim();
+                    if (!['AGENDADO', 'ENTRADA', 'EXECUÇÃO', 'FINALIZADO', 'RETIRADO'].includes(statusTratado)) {
+                        statusTratado = 'AGENDADO';
+                    }
 
-                return {
-                    id: String(item['id'] || item['Placa'] || index),
-                    os_or: String(item['OS'] || item['OR'] || item['OS/OR'] || item['os_or'] || '').trim(),
-                    cliente: String(item['Nome do Cliente'] || item['Cliente'] || item['cliente'] || '').trim(),
-                    telefone: String(item['Telefone'] || item['telefone'] || '').trim(),
-                    placa: String(item['Placa'] || item['placa'] || '').trim(),
-                    mecanico: String(item['Mecânico'] || item['MECANICO'] || item['mecanico'] || '').trim(),
-                    alinhador: String(item['Alinhador'] || item['alinhador'] || '').trim(),
-                    tipo_veiculo: String(item['Tipo'] || item['tipo_veiculo'] || 'CARRO').trim(),
-                    data_agendamento: item['Data'] || item['data_agendamento'] || getHojeLocal(),
-                    status: statusTratado,
-                    observacoes: obsText,
-                    chk_orcamento_pendente: !!item['chk_orcamento_pendente'],
-                    chk_aguardando_aprovacao: !!item['chk_aguardando_aprovacao'],
-                    chk_orcamento_aprovado: !!item['chk_orcamento_aprovado'],
-                    chk_aguardando_pecas: !!item['chk_aguardando_pecas'],
-                    fornecedor: String(item['fornecedor'] || ''),
-                    codigo_peca: String(item['codigo_peca'] || ''),
-                    updated_at: item['updated_at'] || new Date().toISOString()
-                };
-            });
+                    let obsText = String(item['Relato do Cliente'] || item['Observações'] || '');
+                    if (item['Luz no Painel']) {
+                        obsText = `[Luz Painel: ${item['Luz no Painel']}] ` + obsText;
+                    }
 
-            renderizarPainel();
-            return;
+                    return {
+                        id: String(item['id'] || item['Placa'] || index),
+                        os_or: String(item['OS'] || item['OR'] || item['OS/OR'] || item['os_or'] || '').trim(),
+                        cliente: String(item['Nome do Cliente'] || item['Cliente'] || item['cliente'] || '').trim(),
+                        telefone: String(item['Telefone'] || item['telefone'] || '').trim(),
+                        placa: String(item['Placa'] || item['placa'] || '').trim(),
+                        mecanico: String(item['Mecânico'] || item['MECANICO'] || item['mecanico'] || '').trim(),
+                        alinhador: String(item['Alinhador'] || item['alinhador'] || '').trim(),
+                        tipo_veiculo: String(item['Tipo'] || item['tipo_veiculo'] || 'CARRO').trim(),
+                        data_agendamento: item['Data'] || item['data_agendamento'] || getHojeLocal(),
+                        status: statusTratado,
+                        observacoes: obsText,
+                        chk_orcamento_pendente: !!item['chk_orcamento_pendente'],
+                        chk_aguardando_aprovacao: !!item['chk_aguardando_aprovacao'],
+                        chk_orcamento_aprovado: !!item['chk_orcamento_aprovado'],
+                        chk_aguardando_pecas: !!item['chk_aguardando_pecas'],
+                        fornecedor: String(item['fornecedor'] || ''),
+                        codigo_peca: String(item['codigo_peca'] || ''),
+                        updated_at: item['updated_at'] || new Date().toISOString()
+                    };
+                });
+
+                renderizarPainel();
+                return;
+            }
         } catch (err) {
-            console.error("Erro ao buscar dados do Google Sheets:", err);
+            console.warn("Aviso: Falha temporária no Google Sheets, mantendo sincronização via Supabase.");
         }
     }
 
